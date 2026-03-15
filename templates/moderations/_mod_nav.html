@@ -16,10 +16,8 @@
      {% if request.resolver_match.url_name == 'users_list' %}class="active" aria-current="page"{% endif %}>
     <i class="fa-solid fa-users"></i> <span class="label">Users</span>
   </a>
-  {% if request.user.is_staff %}
-  <a href="{% url 'moderations:super_mods' %}"
-     {% if request.resolver_match.url_name == 'super_mods' %}class="active" aria-current="page"{% endif %}>
-    <i class="fa-solid fa-star"></i> <span class="label">Super Mods</span>
+  <a href="{% url 'moderations:stages_manage' %}"
+     {% if request.resolver_match.url_name == 'stages_manage' %}class="active" aria-current="page"{% endif %}>
+    <i class="fa-solid fa-layer-group"></i> <span class="label">Stages</span>
   </a>
-  {% endif %}
 </nav>

@@ -11,8 +11,9 @@ urlpatterns = [
     path('users/', views.users_list, name='users_list'),
     path('users/<int:user_id>/toggle-ban/', views.toggle_ban_user, name='toggle_ban'),
     path('blocked/', views.blocked_posts, name='blocked_posts'),
+    path('stages/', views.stages_manage, name='stages_manage'),
+    path('assign-mod/', views.assign_stage_moderator, name='assign_stage_moderator'),
+    path('remove-mod/', views.remove_stage_moderator, name='remove_stage_moderator'),
+    path('stages/<int:stage_id>/toggle/', views.toggle_stage_active, name='toggle_stage_active'),
     path('appeal/', views.appeal, name='appeal'),
-    # Super-mod management (staff only)
-    path('super-mods/', views.manage_super_mods, name='super_mods'),
-    path('super-mods/<int:mod_id>/remove/', views.remove_super_mod, name='remove_super_mod'),
 ]

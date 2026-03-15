@@ -3,11 +3,8 @@ Stage moderation permission helpers.
 
 Hierarchy (highest → lowest):
   1. Django staff (is_staff)          — full platform access
-  2. Super mod (StageModerator.is_super_mod=True) — all stages
-  3. Stage admin (Stage.admin)         — own stage only
-  4. Stage mod (StageModerator record) — assigned stage only
+  2. Stage mod (StageModerator record) — assigned stage only
 """
-from django.db.models import Q
 
 
 def can_moderate_stage(user, stage):
@@ -16,14 +13,11 @@ def can_moderate_stage(user, stage):
         return False
     if user.is_staff:
         return True
-    if stage.admin_id and stage.admin_id == user.id:
-        return True
     from stages.models import StageModerator
     return StageModerator.objects.filter(
         user=user,
         is_active=True,
-    ).filter(
-        Q(stage=stage) | Q(is_super_mod=True)
+        stage=stage,
     ).exists()
 
 
@@ -31,21 +25,7 @@ def can_assign_mods(user, stage):
     """Return True if *user* may add/remove moderators for *stage*."""
     if not user.is_authenticated:
         return False
-    if user.is_staff:
-        return True
-    return stage.admin_id and stage.admin_id == user.id
-
-
-def is_platform_super_mod(user):
-    """Return True if *user* is a super mod across all stages."""
-    if not user.is_authenticated:
-        return False
-    if user.is_staff:
-        return True
-    from stages.models import StageModerator
-    return StageModerator.objects.filter(
-        user=user, is_super_mod=True, is_active=True
-    ).exists()
+    return user.is_staff
 
 
 def mod_required(view_func):
@@ -61,6 +41,9 @@ def mod_required(view_func):
             return redirect(f'/users/login/?next={request.path}')
         stage_name = kwargs.get('stage_name')
         stage = get_object_or_404(Stage, name=stage_name)
+        if not stage.is_active and not request.user.is_staff:
+            messages.error(request, "This stage is currently disabled by staff.")
+            return redirect('/')
         if not can_moderate_stage(request.user, stage):
             messages.error(request, "You don't have permission to moderate this stage.")
             return redirect('stages:stage_page', stage_name=stage.name)

@@ -15,12 +15,13 @@ class StageAdmin(admin.ModelAdmin):
 
 @admin.register(StageModerator)
 class StageModeratorAdmin(admin.ModelAdmin):
-    list_display = ('user', 'stage', 'is_super_mod', 'is_active', 'added_by', 'created_at')
-    list_filter = ('is_super_mod', 'is_active')
+    list_display = ('user', 'stage', 'is_active', 'added_by', 'created_at')
+    list_filter = ('is_active',)
     search_fields = ('user__username', 'stage__name')
     raw_id_fields = ('user', 'stage', 'added_by')
     list_editable = ('is_active',)
     ordering = ['-created_at']
+    exclude = ('is_super_mod',)
 
 
 @admin.register(StageBan)

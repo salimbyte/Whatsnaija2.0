@@ -27,7 +27,7 @@ urlpatterns = [
     path('posts/',    include('posts.urls')),
     path('s/',        include('stages.urls')),
     path('users/',    include('users.urls')),
-    path('mod/',      include('moderations.urls')),
+    path('mod/',      include(('moderations.urls', 'moderations'), namespace='moderations')),
     path('accounts/', include('allauth.urls')),
 
     # User profile catch-all — must stay last

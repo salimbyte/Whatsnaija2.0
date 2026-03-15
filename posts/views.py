@@ -45,7 +45,10 @@ def create(request):
     """
     Create a new post with optional images.
     """
-    stages = Stage.objects.all()
+    if request.user.is_staff:
+        stages = Stage.objects.all()
+    else:
+        stages = Stage.objects.filter(is_active=True)
     postform = PostForm()
     formset = PostImageFormSet(queryset=PostImage.objects.none())
 
@@ -72,6 +75,11 @@ def create(request):
                         request,
                         f"You are banned from posting in s/{post.stage.name}.{until}{reason_txt}"
                     )
+                    return render(request, "posts/create.html", {
+                        "stages": stages, 'form': postform, 'formset': formset
+                    })
+                if not post.stage.is_active and not request.user.is_staff:
+                    messages.error(request, f"s/{post.stage.name} is currently disabled by staff.")
                     return render(request, "posts/create.html", {
                         "stages": stages, 'form': postform, 'formset': formset
                     })
@@ -123,6 +131,9 @@ def post(request, slug):
         if not is_mod:
             messages.error(request, 'This post has been removed by a moderator.')
             return redirect(f'/s/{post.stage.name}/' if post.stage else '/')
+    if post.stage and not post.stage.is_active and not request.user.is_staff:
+        messages.error(request, 'This stage is currently disabled by staff.')
+        return redirect('/')
     suggests = Post.objects.filter(
         is_published=True, is_blocked=False
     ).exclude(pk=post.pk).select_related('author', 'stage').prefetch_related('images').order_by('-created_at').distinct()[:15]

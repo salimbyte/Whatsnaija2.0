@@ -135,9 +135,7 @@
       <div class="mod-stage-info">
         <div class="mod-stage-name">
           {{ stage.name }}
-          {% if item.mod.is_super_mod %}
-            <span class="mod-stage-badge mod-stage-badge--super"><i class="fa-solid fa-star"></i> Super Mod</span>
-          {% elif stage.admin == request.user %}
+          {% if stage.admin == request.user %}
             <span class="mod-stage-badge mod-stage-badge--owner"><i class="fa-solid fa-crown"></i> Owner</span>
           {% else %}
             <span class="mod-stage-badge mod-stage-badge--mod"><i class="fa-solid fa-shield-halved"></i> Mod</span>

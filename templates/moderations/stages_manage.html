@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/mod.css' %}" />
+{% endblock link %}
+
+{% block title %}Stage Management — WhatsNaija Moderation{% endblock title %}
+
+{% block content %}
+<div class="mod-wrap">
+
+  <div class="mod-page-header">
+    <div class="mod-header-label"><i class="fa-solid fa-shield-halved"></i> Platform Moderation</div>
+    <h1>Stage Management</h1>
+    <p>Assign moderators and control stage visibility.</p>
+  </div>
+
+  {% include "moderations/_mod_nav.html" %}
+
+  <div class="mod-box" style="margin-top:16px;">
+    <form method="get" class="mod-search-form">
+      <div class="mod-search-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" name="q" value="{{ q }}" placeholder="Search stages by name or title…"
+          class="mod-search-input" autocomplete="off" />
+      </div>
+      <input type="hidden" name="status" value="{{ status_filter }}" />
+      <button type="submit" class="mod-btn mod-btn--primary mod-btn--sm">
+        <i class="fa-solid fa-magnifying-glass"></i> Search
+      </button>
+      {% if page_obj.paginator.count %}
+      <span style="font-size:12px;color:var(--vz-text-faint);white-space:nowrap;">
+        {{ page_obj.paginator.count }} stage{{ page_obj.paginator.count|pluralize }}{% if q %} for &ldquo;{{ q }}&rdquo;{% endif %}
+      </span>
+      {% endif %}
+    </form>
+
+    <div class="mod-filter-wrap">
+      <a href="?status=all{% if q %}&q={{ q }}{% endif %}"
+         class="mod-filter-tab{% if status_filter == 'all' %} active{% endif %}">
+        <i class="fa-solid fa-layer-group"></i> All
+      </a>
+      <a href="?status=active{% if q %}&q={{ q }}{% endif %}"
+         class="mod-filter-tab{% if status_filter == 'active' %} active{% endif %}">
+        <i class="fa-solid fa-circle-check"></i> Active
+      </a>
+      <a href="?status=disabled{% if q %}&q={{ q }}{% endif %}"
+         class="mod-filter-tab{% if status_filter == 'disabled' %} active{% endif %}">
+        <i class="fa-solid fa-ban"></i> Disabled
+      </a>
+    </div>
+  </div>
+
+  <div class="mod-two-col mod-two-col--equal" style="margin-top:16px;">
+
+    <div class="mod-box">
+      <div class="mod-box-title">
+        <span><i class="fa-solid fa-user-shield"></i> Assign Moderator</span>
+      </div>
+      <div class="mod-assign-stack">
+        <form method="post" action="{% url 'moderations:assign_stage_moderator' %}" class="mod-assign-form">
+          {% csrf_token %}
+          <select name="stage_id" class="mod-select" required>
+            <option value="">Select stage</option>
+            {% for stage in stages_list %}
+            <option value="{{ stage.id }}">s/{{ stage.name }}{% if stage.title %} — {{ stage.title }}{% endif %}</option>
+            {% endfor %}
+          </select>
+          <input type="text" name="username" class="mod-input" placeholder="Username" required autocomplete="off" />
+          <button type="submit" class="mod-btn mod-btn--primary mod-btn--sm">
+            <i class="fa-solid fa-user-plus"></i> Assign
+          </button>
+        </form>
+
+        <form method="post" action="{% url 'moderations:remove_stage_moderator' %}" class="mod-assign-form">
+          {% csrf_token %}
+          <select name="stage_id" class="mod-select" required>
+            <option value="">Select stage</option>
+            {% for stage in stages_list %}
+            <option value="{{ stage.id }}">s/{{ stage.name }}{% if stage.title %} — {{ stage.title }}{% endif %}</option>
+            {% endfor %}
+          </select>
+          <input type="text" name="username" class="mod-input" placeholder="Username" required autocomplete="off" />
+          <button type="submit" class="mod-btn mod-btn--danger mod-btn--sm"
+            onclick="return confirm('Remove this moderator?')">
+            <i class="fa-solid fa-user-minus"></i> Remove
+          </button>
+        </form>
+      </div>
+      <div class="mod-hint">Staff only. Moderators are stage‑scoped and cannot manage other stages.</div>
+    </div>
+
+    <div class="mod-box">
+      <div class="mod-box-title">
+        <span><i class="fa-solid fa-toggle-on"></i> Stage Visibility</span>
+      </div>
+      <div class="mod-stage-list">
+        {% for stage in page_obj %}
+        <div class="mod-stage-row">
+          <div class="mod-stage-info">
+            <strong>s/{{ stage.name }}</strong>
+            <span class="mod-stage-meta">{{ stage.members_count }} member{{ stage.members_count|pluralize }}</span>
+          </div>
+          <div class="mod-stage-actions">
+            <span class="status-pill {% if stage.is_active %}status-pill--active{% else %}status-pill--banned{% endif %}">
+              {% if stage.is_active %}Active{% else %}Disabled{% endif %}
+            </span>
+            <a href="{% url 'stages:edit' stage.name %}" class="mod-btn mod-btn--sm mod-btn--ghost">
+              <i class="fa-solid fa-pen"></i> Edit
+            </a>
+            <form method="post" action="{% url 'moderations:toggle_stage_active' stage.id %}" style="margin:0;">
+              {% csrf_token %}
+              <button type="submit" class="mod-btn mod-btn--sm {% if stage.is_active %}mod-btn--danger{% else %}mod-btn--success{% endif %}"
+                onclick="return confirm('{% if stage.is_active %}Disable{% else %}Enable{% endif %} s/{{ stage.name }}?')">
+                {% if stage.is_active %}<i class="fa-solid fa-toggle-off"></i> Disable{% else %}<i class="fa-solid fa-toggle-on"></i> Enable{% endif %}
+              </button>
+            </form>
+          </div>
+        </div>
+        {% empty %}
+        <div class="mod-empty" style="padding:20px;">
+          <i class="fa-solid fa-circle-check"></i>
+          No stages found.
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if page_obj.has_other_pages %}
+      <div class="mod-pagination">
+        {% if page_obj.has_previous %}
+          <a href="?status={{ status_filter }}&q={{ q }}&page={{ page_obj.previous_page_number }}">&larr; Prev</a>
+        {% endif %}
+        <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?status={{ status_filter }}&q={{ q }}&page={{ page_obj.next_page_number }}">Next &rarr;</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+</div>
+{% endblock content %}

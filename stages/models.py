@@ -101,16 +101,16 @@ class Stage(models.Model):
 class StageModerator(models.Model):
     """
     Links a user to a stage as a moderator.
-    - is_super_mod=True → can moderate ALL stages (stage field is ignored)
-    - is_super_mod=False → moderates only the assigned stage
-    Stage admins (stage.admin) have implicit mod powers without needing a record.
+    - Moderates only the assigned stage.
+    - Super-mod support is deprecated and no longer grants extra permissions.
+    Stage admins do not get implicit mod powers without a record.
     """
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='stage_mod_roles',
     )
-    # Null when is_super_mod=True (applies to all stages)
+    # Null allowed for deprecated super-mod records (no longer used for permissions)
     stage = models.ForeignKey(
         Stage,
         on_delete=models.CASCADE,
@@ -120,7 +120,7 @@ class StageModerator(models.Model):
     )
     is_super_mod = models.BooleanField(
         default=False,
-        help_text="Super mods can moderate every stage on the platform.",
+        help_text="Deprecated. Super-mod privileges are no longer used.",
     )
     added_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -138,8 +138,6 @@ class StageModerator(models.Model):
         verbose_name_plural = "Stage Moderators"
 
     def __str__(self):
-        if self.is_super_mod:
-            return f'{self.user.username} (Super Mod — all stages)'
         return f'{self.user.username} → s/{self.stage.name if self.stage else "?"}'
 
 

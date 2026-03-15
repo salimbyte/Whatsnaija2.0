@@ -3,6 +3,8 @@
    Matches site design language exactly.
    ============================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Sora:wght@400;500;600;700&display=swap');
+
 /* === Same tokens as index.css / stage.css === */
 
 
@@ -388,6 +390,8 @@ a.mod-stat-card:hover {
 .mod-action-badge.stage_unban    { background: var(--vz-success-bg); color: var(--vz-success); }
 .mod-action-badge.add_mod        { background: var(--vz-info-bg); color: var(--vz-info); }
 .mod-action-badge.add_super_mod  { background: var(--vz-info-bg); color: var(--vz-info); }
+.mod-action-badge.enable_stage   { background: var(--vz-success-bg); color: var(--vz-success); }
+.mod-action-badge.disable_stage  { background: #fef2f2; color: #dc2626; }
 .mod-action-badge.remove_mod,
 .mod-action-badge.remove_super_mod,
 .mod-action-badge.dismiss_report { background: var(--vz-bg);  color: var(--vz-text-muted); border: 1px solid var(--vz-border); }
@@ -544,6 +548,32 @@ a.mod-stat-card:hover {
 .mod-pagination a:hover { border-color: var(--vz-accent); color: var(--vz-accent); }
 .mod-pagination .current { background: var(--vz-accent); color: #fff; border-color: var(--vz-accent); }
 
+/* ── Stage controls on dashboard ───────────────────────── */
+.mod-assign-form {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 14px 18px 10px;
+  border-top: 1px solid var(--vz-border-light);
+}
+.mod-assign-stack { display: flex; flex-direction: column; gap: 10px; }
+.mod-input {
+  flex: 1; min-width: 180px; padding: 8px 12px;
+  border: 1px solid var(--vz-border); border-radius: var(--vz-radius-sm);
+  font-size: 12px; font-family: var(--vz-font);
+  background: var(--vz-surface); color: var(--vz-text);
+}
+.mod-input:focus { outline: none; border-color: var(--vz-accent); }
+.mod-hint { font-size: 11px; color: var(--vz-text-faint); padding: 0 18px 14px; }
+
+.mod-stage-list { padding: 10px 18px 16px; display: flex; flex-direction: column; gap: 8px; }
+.mod-stage-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border: 1px solid var(--vz-border-light);
+  border-radius: var(--vz-radius-sm); background: var(--vz-surface);
+}
+.mod-stage-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mod-stage-meta { font-size: 11px; color: var(--vz-text-faint); }
+.mod-stage-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
 /* ── Warning / info strip ───────────────────────────────── */
 .mod-warning-strip {
   display: flex; align-items: flex-start; gap: 10px;
@@ -573,6 +603,215 @@ a.mod-stat-card:hover {
 .sm-name { font-size: 13px; font-weight: 700; color: var(--vz-text); text-decoration: none; display: block; }
 .sm-name:hover { color: var(--vz-accent); }
 .sm-meta { font-size: 11px; color: var(--vz-text-faint); margin-top: 2px; }
+
+/* ── Dashboard rework ───────────────────────────────────── */
+.mod-dashboard {
+  --dash-ink: #0b1e16;
+  --dash-forest: #0c4b33;
+  --dash-moss: #1c7a52;
+  --dash-sand: #f6f2ea;
+  --dash-amber: #d97706;
+  font-family: 'Sora', sans-serif;
+  position: relative;
+}
+.mod-dashboard::before {
+  content: '';
+  position: absolute;
+  inset: -40px -40px auto -40px;
+  height: 260px;
+  background:
+    radial-gradient(600px 200px at 10% 0%, rgba(28,122,82,0.18), transparent 70%),
+    radial-gradient(500px 220px at 90% 20%, rgba(217,119,6,0.12), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.mod-dashboard > * { position: relative; z-index: 1; }
+
+.mod-dash-hero {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 18px;
+  background: linear-gradient(135deg, var(--dash-forest), #0f5a3b 60%, #0c3b28 100%);
+  border-radius: 18px;
+  padding: 26px;
+  color: #fff;
+  box-shadow: 0 18px 50px rgba(12,75,51,0.25);
+  overflow: hidden;
+}
+.mod-dash-hero::after {
+  content: '';
+  position: absolute;
+  top: -40px; right: -30px;
+  width: 220px; height: 220px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 50%;
+  filter: blur(2px);
+}
+.mod-dash-hero__main { z-index: 1; }
+.mod-dash-kicker {
+  font-size: 12px; font-weight: 600; letter-spacing: .4px;
+  display: inline-flex; align-items: center; gap: 8px;
+  color: rgba(255,255,255,.7);
+  text-transform: uppercase;
+}
+.mod-dash-title {
+  font-family: 'Fraunces', serif;
+  font-size: 34px;
+  line-height: 1.1;
+  margin: 6px 0 10px;
+}
+.mod-dash-sub { font-size: 14px; color: rgba(255,255,255,.75); margin: 0 0 14px; }
+.mod-dash-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.mod-cta {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: #fff; text-decoration: none; font-weight: 600; font-size: 13px;
+  transition: transform .2s ease, background .2s ease, border-color .2s ease;
+}
+.mod-cta:hover { transform: translateY(-1px); background: rgba(255,255,255,0.16); }
+.mod-cta--primary {
+  background: #fff;
+  color: var(--dash-forest);
+  border-color: #fff;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+.mod-cta--primary:hover { background: #fef8f2; }
+.mod-dash-pills { margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+.mod-pill {
+  font-size: 12px; font-weight: 600;
+  background: rgba(255,255,255,0.15);
+  padding: 6px 10px; border-radius: 999px;
+}
+.mod-pill strong { margin-left: 4px; }
+
+.mod-dash-hero__panel {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+  z-index: 1;
+}
+.mod-dash-panel-title {
+  font-size: 12px; font-weight: 600; letter-spacing: .4px;
+  color: rgba(255,255,255,.75);
+}
+.mod-dash-mini {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+}
+.mod-mini-card {
+  background: rgba(255,255,255,0.12);
+  border-radius: 10px; padding: 10px;
+}
+.mod-mini-label { font-size: 11px; color: rgba(255,255,255,.7); }
+.mod-mini-val { font-size: 18px; font-weight: 700; }
+.mod-dash-panel-note { font-size: 11px; color: rgba(255,255,255,.7); }
+
+.mod-dash-grid {
+  display: grid; grid-template-columns: 1.4fr 0.9fr; gap: 16px;
+  margin-top: 18px;
+}
+.mod-dash-card {
+  background: var(--vz-surface);
+  border: 1px solid var(--vz-border);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  animation: dashIn .4s ease both;
+}
+.mod-dash-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .5px; color: var(--vz-text-secondary);
+  margin-bottom: 12px;
+}
+.mod-dash-card-head a { font-size: 12px; color: var(--vz-accent); text-decoration: none; }
+.mod-dash-card-head a:hover { text-decoration: underline; }
+
+.mod-dash-report {
+  display: grid; grid-template-columns: 1fr auto; gap: 12px;
+  padding: 12px; border-radius: 12px; border: 1px solid var(--vz-border-light);
+  background: var(--vz-bg);
+  margin-bottom: 10px;
+  transition: transform .2s ease, border-color .2s ease;
+}
+.mod-dash-report:hover { transform: translateY(-1px); border-color: var(--vz-accent-glow); }
+.mod-dash-report-title a { color: var(--vz-text); text-decoration: none; font-weight: 700; }
+.mod-dash-report-title a:hover { color: var(--vz-accent); }
+.mod-dash-report-meta { font-size: 12px; color: var(--vz-text-muted); margin-top: 4px; }
+.mod-dash-report-time { font-size: 11px; color: var(--vz-text-faint); white-space: nowrap; }
+
+.mod-dash-action {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 10px;
+  align-items: center;
+  padding: 10px 8px;
+  border-bottom: 1px dashed var(--vz-border-light);
+}
+.mod-dash-action:last-child { border-bottom: none; }
+.mod-dash-action-text { font-size: 12.5px; color: var(--vz-text-secondary); }
+.mod-dash-action-time { font-size: 11px; color: var(--vz-text-faint); }
+
+.mod-dash-stat-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+}
+.mod-dash-stat {
+  background: var(--vz-bg);
+  border: 1px solid var(--vz-border-light);
+  border-radius: 12px; padding: 12px;
+  text-decoration: none; color: inherit;
+  transition: border-color .2s ease, transform .2s ease;
+}
+.mod-dash-stat:hover { border-color: var(--vz-accent); transform: translateY(-1px); }
+.mod-dash-stat-label { font-size: 11px; color: var(--vz-text-faint); text-transform: uppercase; letter-spacing: .3px; }
+.mod-dash-stat-val { font-size: 20px; font-weight: 700; color: var(--vz-text); display: block; margin-top: 6px; }
+.mod-dash-stat-val.is-danger { color: var(--vz-danger); }
+.mod-dash-stat-val.is-warning { color: var(--vz-warning); }
+.mod-dash-stat-val.is-amber { color: var(--vz-terra); }
+
+.mod-dash-ops { display: flex; flex-direction: column; gap: 10px; }
+.mod-dash-op {
+  display: grid; grid-template-columns: auto 1fr; gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px; border: 1px solid var(--vz-border-light);
+  text-decoration: none; color: var(--vz-text);
+  background: var(--vz-bg);
+  transition: border-color .2s ease, transform .2s ease;
+}
+.mod-dash-op:hover { border-color: var(--vz-accent); transform: translateY(-1px); }
+.mod-dash-op i {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--vz-accent-soft);
+  color: var(--vz-accent);
+  display: flex; align-items: center; justify-content: center;
+}
+.mod-dash-op-title { font-size: 13px; font-weight: 700; }
+.mod-dash-op-sub { font-size: 11px; color: var(--vz-text-muted); }
+
+@keyframes dashIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mod-dash-card { animation: none; }
+  .mod-dash-report:hover,
+  .mod-dash-stat:hover,
+  .mod-dash-op:hover,
+  .mod-cta:hover { transform: none; }
+}
+
+@media (max-width: 980px) {
+  .mod-dash-hero { grid-template-columns: 1fr; }
+  .mod-dash-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .mod-dash-title { font-size: 28px; }
+  .mod-dash-mini { grid-template-columns: 1fr 1fr; }
+  .mod-dash-stat-grid { grid-template-columns: 1fr; }
+}
 
 /* ── Appeal form ───────────────────────────────────────── */
 .mod-appeal-form { padding: 18px; display: flex; flex-direction: column; gap: 14px; }

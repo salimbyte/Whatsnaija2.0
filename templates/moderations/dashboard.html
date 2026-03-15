@@ -9,103 +9,184 @@
 {% block title %}Moderation Dashboard — WhatsNaija{% endblock title %}
 
 {% block content %}
-<div class="mod-wrap">
+<div class="mod-wrap mod-dashboard">
 
-  <div class="mod-page-header">
-    <div class="mod-header-label"><i class="fa-solid fa-shield-halved"></i> Platform Moderation</div>
-    <h1>Moderation Dashboard</h1>
-    <p>Manage reports, content, users, and the mod team across all of WhatsNaija.</p>
-  </div>
+  <section class="mod-dash-hero">
+    <div class="mod-dash-hero__main">
+      <div class="mod-dash-kicker"><i class="fa-solid fa-shield-halved"></i> Platform Moderation</div>
+      <h1 class="mod-dash-title">Command Center</h1>
+      <p class="mod-dash-sub">Triage reports, protect communities, and keep WhatsNaija steady.</p>
+      <div class="mod-dash-actions">
+        <a href="{% url 'moderations:report_queue' %}?status=pending" class="mod-cta mod-cta--primary">
+          Review {{ stats.pending_reports|intcomma }} pending
+        </a>
+        <a href="{% url 'moderations:stages_manage' %}" class="mod-cta">
+          Stage Control
+        </a>
+        <a href="{% url 'moderations:users_list' %}" class="mod-cta">
+          Users
+        </a>
+      </div>
+      <div class="mod-dash-pills">
+        <span class="mod-pill">Pending <strong>{{ stats.pending_reports|intcomma }}</strong></span>
+        <span class="mod-pill">Blocked <strong>{{ stats.blocked_posts|intcomma }}</strong></span>
+        <span class="mod-pill">Banned <strong>{{ stats.banned_users|intcomma }}</strong></span>
+      </div>
+    </div>
+    <div class="mod-dash-hero__panel">
+      <div class="mod-dash-panel-title">Today’s Snapshot</div>
+      <div class="mod-dash-mini">
+        <div class="mod-mini-card">
+          <span class="mod-mini-label">Total Reports</span>
+          <span class="mod-mini-val">{{ stats.total_reports|intcomma }}</span>
+        </div>
+        <div class="mod-mini-card">
+          <span class="mod-mini-label">Active Stages</span>
+          <span class="mod-mini-val">{{ stats.total_stages|intcomma }}</span>
+        </div>
+        <div class="mod-mini-card">
+          <span class="mod-mini-label">Users</span>
+          <span class="mod-mini-val">{{ stats.total_users|intcomma }}</span>
+        </div>
+        <div class="mod-mini-card">
+          <span class="mod-mini-label">Actions</span>
+          <span class="mod-mini-val">{{ recent_actions|length }}</span>
+        </div>
+      </div>
+      <div class="mod-dash-panel-note">
+        This overview updates in real time as staff act on reports.
+      </div>
+    </div>
+  </section>
 
   {% include "moderations/_mod_nav.html" %}
 
-  <!-- 5-col stats — no icon boxes, inline color on non-zero alert values -->
-  <div class="mod-stats mod-stats--dashboard">
-    <a href="{% url 'moderations:report_queue' %}?status=pending" class="mod-stat-card mod-stat-card--center">
-      <span class="mod-stat-val{% if stats.pending_reports %} is-danger{% endif %}">{{ stats.pending_reports|intcomma }}</span>
-      <span class="mod-stat-lbl">Pending</span>
-    </a>
-    <a href="{% url 'moderations:report_queue' %}" class="mod-stat-card mod-stat-card--center">
-      <span class="mod-stat-val">{{ stats.total_reports|intcomma }}</span>
-      <span class="mod-stat-lbl">Total Reports</span>
-    </a>
-    <a href="{% url 'moderations:blocked_posts' %}" class="mod-stat-card mod-stat-card--center">
-      <span class="mod-stat-val{% if stats.blocked_posts %} is-warning{% endif %}">{{ stats.blocked_posts|intcomma }}</span>
-      <span class="mod-stat-lbl">Blocked Posts</span>
-    </a>
-    <a href="{% url 'moderations:users_list' %}?status=banned" class="mod-stat-card mod-stat-card--center">
-      <span class="mod-stat-val{% if stats.banned_users %} is-amber{% endif %}">{{ stats.banned_users|intcomma }}</span>
-      <span class="mod-stat-lbl">Banned Users</span>
-    </a>
-    <a href="{% url 'moderations:users_list' %}" class="mod-stat-card mod-stat-card--center">
-      <span class="mod-stat-val">{{ stats.total_users|intcomma }}</span>
-      <span class="mod-stat-lbl">Users</span>
-    </a>
-  </div>
+  <section class="mod-dash-grid">
+    <div class="mod-dash-col">
+      <div class="mod-dash-card mod-dash-card--priority">
+        <div class="mod-dash-card-head">
+          <span><i class="fa-solid fa-flag"></i> Priority Queue</span>
+          <a href="{% url 'moderations:report_queue' %}">Open queue →</a>
+        </div>
 
-  <!-- Equal two-column layout matching stage mod_dashboard -->
-  <div class="mod-two-col mod-two-col--equal">
-
-    <!-- Pending Reports — info only, full actions live in the queue -->
-    <div class="mod-box">
-      <div class="mod-box-title">
-        <span>
-          <i class="fa-solid fa-flag"></i> Pending Reports
-          {% if stats.pending_reports > 0 %}<span class="mod-pending-count">{{ stats.pending_reports }}</span>{% endif %}
-        </span>
-        <a href="{% url 'moderations:report_queue' %}">View all &rarr;</a>
-      </div>
-
-      {% for report in pending_reports %}
-      <div class="mod-report-card mod-report-card--urgent">
-        <div class="mod-report-top">
-          <div class="mod-report-badges">
+        {% for report in pending_reports %}
+        <div class="mod-dash-report">
+          <div class="mod-dash-report-left">
             <span class="mod-type-badge mod-type-badge--{{ report.report_type }}">{{ report.get_report_type_display }}</span>
-            {% if report.post %}
-              <a href="{% url 'posts:detail' report.post.slug %}" class="mod-report-link text-truncate">{{ report.post.title|truncatechars:36 }}</a>
-            {% elif report.comment %}
-              <span class="mod-report-link mod-report-link--muted">Comment</span>
-            {% endif %}
+            <div class="mod-dash-report-title">
+              {% if report.post %}
+                <a href="{% url 'posts:detail' report.post.slug %}">{{ report.post.title|truncatechars:40 }}</a>
+              {% elif report.comment %}
+                <span>Comment report</span>
+              {% else %}
+                <span>Appeal</span>
+              {% endif %}
+            </div>
+            <div class="mod-dash-report-meta">
+              by {{ report.reporter.username }}
+              {% if report.post and report.post.stage %} · s/{{ report.post.stage.name }}{% endif %}
+              {% if report.description %} · “{{ report.description|truncatechars:36 }}”{% endif %}
+            </div>
           </div>
-          <span class="mod-report-time">{{ report.created_at|timesince }} ago</span>
+          <div class="mod-dash-report-time">{{ report.created_at|timesince }} ago</div>
         </div>
-        <div class="mod-report-body">
-          <div style="font-size:12px;color:var(--vz-text-muted);">
-            by {{ report.reporter.username }}{% if report.post %} &middot; post by {{ report.post.author.username }}{% elif report.comment and report.comment.user %} &middot; comment by {{ report.comment.user.username }}{% endif %}{% if report.description %} &middot; &ldquo;{{ report.description|truncatechars:40 }}&rdquo;{% endif %}
+        {% empty %}
+        <div class="mod-empty">
+          <i class="fa-solid fa-circle-check" style="color:var(--vz-accent);opacity:1;"></i>
+          All clear — no pending reports.
+          <p>New reports will appear here when users flag content.</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="mod-dash-card mod-dash-card--stream">
+        <div class="mod-dash-card-head">
+          <span><i class="fa-solid fa-scroll"></i> Action Stream</span>
+          <a href="{% url 'moderations:report_queue' %}">View all →</a>
+        </div>
+        {% for action in recent_actions %}
+        <div class="mod-dash-action">
+          <span class="mod-action-badge {{ action.action }}">{{ action.get_action_display }}</span>
+          <div class="mod-dash-action-text">
+            {{ action.moderator.username }}
+            {% if action.target_user %} → {{ action.target_user.username }}{% endif %}
+            {% if action.target_post %} · “{{ action.target_post.title|truncatechars:26 }}”{% endif %}
+            {% if action.stage %} · s/{{ action.stage.name }}{% endif %}
           </div>
+          <div class="mod-dash-action-time">{{ action.created_at|timesince }} ago</div>
         </div>
+        {% empty %}
+        <div class="mod-empty" style="padding:28px 20px;">
+          <i class="fa-regular fa-clock"></i>
+          No actions recorded yet.
+        </div>
+        {% endfor %}
       </div>
-      {% empty %}
-      <div class="mod-empty">
-        <i class="fa-solid fa-circle-check" style="color:var(--vz-accent);opacity:1;"></i>
-        All clear — no pending reports.
-        <p>New reports will appear here when users flag content.</p>
-      </div>
-      {% endfor %}
     </div>
 
-    <!-- Recent Actions — compact single-line rows matching stage mod_dashboard -->
-    <div class="mod-box">
-      <div class="mod-box-title">
-        <span><i class="fa-solid fa-scroll"></i> Recent Actions</span>
+    <aside class="mod-dash-col">
+      <div class="mod-dash-card mod-dash-card--stats">
+        <div class="mod-dash-card-head">
+          <span><i class="fa-solid fa-chart-simple"></i> System Signals</span>
+        </div>
+        <div class="mod-dash-stat-grid">
+          <a href="{% url 'moderations:report_queue' %}?status=pending" class="mod-dash-stat">
+            <span class="mod-dash-stat-label">Pending</span>
+            <span class="mod-dash-stat-val{% if stats.pending_reports %} is-danger{% endif %}">{{ stats.pending_reports|intcomma }}</span>
+          </a>
+          <a href="{% url 'moderations:report_queue' %}" class="mod-dash-stat">
+            <span class="mod-dash-stat-label">Reports</span>
+            <span class="mod-dash-stat-val">{{ stats.total_reports|intcomma }}</span>
+          </a>
+          <a href="{% url 'moderations:blocked_posts' %}" class="mod-dash-stat">
+            <span class="mod-dash-stat-label">Blocked</span>
+            <span class="mod-dash-stat-val{% if stats.blocked_posts %} is-warning{% endif %}">{{ stats.blocked_posts|intcomma }}</span>
+          </a>
+          <a href="{% url 'moderations:users_list' %}?status=banned" class="mod-dash-stat">
+            <span class="mod-dash-stat-label">Banned</span>
+            <span class="mod-dash-stat-val{% if stats.banned_users %} is-amber{% endif %}">{{ stats.banned_users|intcomma }}</span>
+          </a>
+          <a href="{% url 'moderations:users_list' %}" class="mod-dash-stat">
+            <span class="mod-dash-stat-label">Users</span>
+            <span class="mod-dash-stat-val">{{ stats.total_users|intcomma }}</span>
+          </a>
+          <a href="{% url 'moderations:stages_manage' %}" class="mod-dash-stat">
+            <span class="mod-dash-stat-label">Stages</span>
+            <span class="mod-dash-stat-val">{{ stats.total_stages|intcomma }}</span>
+          </a>
+        </div>
       </div>
-      {% for action in recent_actions %}
-      <div class="mod-log-row">
-        <span class="mod-action-badge {{ action.action }}">{{ action.get_action_display }}</span>
-        <span class="mod-log-text">
-          {{ action.moderator.username }}{% if action.target_user %} &rarr; {{ action.target_user.username }}{% endif %}{% if action.target_post %} &middot; &ldquo;{{ action.target_post.title|truncatechars:22 }}&rdquo;{% endif %}
-        </span>
-        <span class="mod-log-time">{{ action.created_at|timesince }} ago</span>
-      </div>
-      {% empty %}
-      <div class="mod-empty" style="padding:28px 20px;">
-        <i class="fa-regular fa-clock"></i>
-        No actions recorded yet.
-      </div>
-      {% endfor %}
-    </div>
 
-  </div>
+      <div class="mod-dash-card mod-dash-card--ops">
+        <div class="mod-dash-card-head">
+          <span><i class="fa-solid fa-bolt"></i> Quick Ops</span>
+        </div>
+        <div class="mod-dash-ops">
+          <a href="{% url 'moderations:stages_manage' %}" class="mod-dash-op">
+            <i class="fa-solid fa-layer-group"></i>
+            <div>
+              <div class="mod-dash-op-title">Stage Management</div>
+              <div class="mod-dash-op-sub">Assign mods and disable stages</div>
+            </div>
+          </a>
+          <a href="{% url 'moderations:blocked_posts' %}" class="mod-dash-op">
+            <i class="fa-solid fa-ban"></i>
+            <div>
+              <div class="mod-dash-op-title">Blocked Content</div>
+              <div class="mod-dash-op-sub">Restore or audit removals</div>
+            </div>
+          </a>
+          <a href="{% url 'moderations:users_list' %}" class="mod-dash-op">
+            <i class="fa-solid fa-users"></i>
+            <div>
+              <div class="mod-dash-op-title">User Management</div>
+              <div class="mod-dash-op-sub">Ban controls and account review</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </aside>
+  </section>
 
 </div>
 {% endblock content %}

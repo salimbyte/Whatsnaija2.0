@@ -63,6 +63,9 @@ def stages_list(request):
 def stage_page(request, stage_name):
     """Display a stage with its posts"""
     stage = get_object_or_404(Stage, name=stage_name)
+    if not stage.is_active and not request.user.is_staff:
+        messages.error(request, "This stage is currently disabled by staff.")
+        return redirect('/')
     
     # Get all stages for sidebar
     all_stages = Stage.objects.filter(is_active=True).order_by('-members_count')[:30]
@@ -111,6 +114,9 @@ def stage_page(request, stage_name):
 def join_stage(request, stage_name):
     """Toggle membership of the current user in a stage."""
     stage = get_object_or_404(Stage, name=stage_name)
+    if not stage.is_active and not request.user.is_staff:
+        messages.error(request, "This stage is currently disabled by staff.")
+        return redirect('/')
     user = request.user
     if stage.members.filter(pk=user.pk).exists():
         stage.members.remove(user)
@@ -132,15 +138,12 @@ def my_mod_overview(request):
     """Overview of all stages this user moderates — landing page for the nav shield icon."""
     from moderations.models import Report
 
-    # Platform staff/super-mods → full platform dashboard
+    # Platform staff → full platform dashboard
     if request.user.is_staff:
-        return redirect('moderations:dashboard')
-    from stages.mod_utils import is_platform_super_mod
-    if is_platform_super_mod(request.user):
         return redirect('moderations:dashboard')
 
     mod_records = StageModerator.objects.filter(
-        user=request.user, is_active=True
+        user=request.user, is_active=True, stage__isnull=False
     ).select_related('stage').annotate(
         pending_count=Count(
             'stage__posts__reports',
@@ -563,7 +566,7 @@ def mod_add_moderator(request, stage_name):
     stage = get_object_or_404(Stage, name=stage_name)
 
     if not can_assign_mods(request.user, stage):
-        messages.error(request, "Only the stage owner or staff can add moderators.")
+        messages.error(request, "Only staff can add moderators.")
         return redirect('stages:mod_members', stage_name=stage.name)
 
     username = request.POST.get('username', '').strip()
@@ -622,7 +625,7 @@ def mod_remove_moderator(request, stage_name, mod_id):
     stage = get_object_or_404(Stage, name=stage_name)
 
     if not can_assign_mods(request.user, stage):
-        messages.error(request, "Only the stage owner or staff can remove moderators.")
+        messages.error(request, "Only staff can remove moderators.")
         return redirect('stages:mod_members', stage_name=stage.name)
 
     mod = get_object_or_404(StageModerator, id=mod_id, stage=stage)

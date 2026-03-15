@@ -9,7 +9,7 @@ from django.db.models import Q
 
 from .models import Report, ModAction
 from posts.models import Post
-from stages.models import StageModerator, Stage
+from stages.models import Stage, StageModerator
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
@@ -19,15 +19,14 @@ User = get_user_model()
 
 
 def staff_required(view_func):
-    """Decorator that checks if user is staff OR a super-mod."""
+    """Decorator that checks if user is staff."""
     from functools import wraps
-    from stages.mod_utils import is_platform_super_mod
 
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect(f'/users/login/?next={request.path}')
-        if not (request.user.is_staff or is_platform_super_mod(request.user)):
+        if not request.user.is_staff:
             messages.error(request, "You don't have permission to access this page.")
             return redirect('/')
         return view_func(request, *args, **kwargs)
@@ -35,7 +34,7 @@ def staff_required(view_func):
 
 
 def _strict_staff(view_func):
-    """Restrict to Django staff only (not super mods)."""
+    """Restrict to Django staff only."""
     from functools import wraps
 
     @wraps(view_func)
@@ -68,13 +67,148 @@ def dashboard(request):
         'banned_users': User.objects.filter(is_active=False).count(),
         'total_stages': Stage.objects.filter(is_active=True).count(),
     }
-
     return render(request, 'moderations/dashboard.html', {
         'pending_reports': pending_reports,
         'recent_actions': recent_actions,
         'stats': stats,
         'nav_pending': pending_count,
     })
+
+
+@login_required
+@staff_required
+def stages_manage(request):
+    """Stage management for staff."""
+    pending_count = Report.objects.filter(status='pending').count()
+    q = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', 'all')
+
+    stages_qs = Stage.objects.order_by('-members_count', 'name')
+    if q:
+        stages_qs = stages_qs.filter(
+            Q(name__icontains=q) | Q(title__icontains=q)
+        )
+    if status_filter == 'active':
+        stages_qs = stages_qs.filter(is_active=True)
+    elif status_filter == 'disabled':
+        stages_qs = stages_qs.filter(is_active=False)
+
+    paginator = Paginator(stages_qs, 25)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
+    stages_list = stages_qs.only('id', 'name', 'title', 'is_active', 'members_count')
+    return render(request, 'moderations/stages_manage.html', {
+        'nav_pending': pending_count,
+        'stages_list': stages_list,
+        'page_obj': page_obj,
+        'q': q,
+        'status_filter': status_filter,
+    })
+
+
+@login_required
+@staff_required
+@require_POST
+def assign_stage_moderator(request):
+    """Assign a moderator to a stage (staff only)."""
+    stage_id = request.POST.get('stage_id')
+    username = (request.POST.get('username') or '').strip()
+    if not stage_id or not username:
+        messages.error(request, 'Stage and username are required.')
+        return redirect('moderations:dashboard')
+
+    stage = get_object_or_404(Stage, id=stage_id)
+    target = get_object_or_404(User, username__iexact=username)
+
+    mod, created = StageModerator.objects.get_or_create(
+        user=target, stage=stage,
+        defaults={'added_by': request.user, 'is_active': True, 'is_super_mod': False},
+    )
+    if not created:
+        if mod.is_active:
+            messages.info(request, f'{target.username} is already a moderator for s/{stage.name}.')
+        else:
+            mod.is_active = True
+            mod.added_by = request.user
+            mod.save()
+            messages.success(request, f'{target.username} reactivated as moderator for s/{stage.name}.')
+    else:
+        messages.success(request, f'{target.username} added as moderator for s/{stage.name}.')
+
+    ModAction.objects.create(
+        moderator=request.user, action='add_mod',
+        target_user=target, stage=stage,
+        reason=f'Assigned moderator in s/{stage.name}',
+    )
+    send_notification(
+        recipient=target,
+        sender=request.user,
+        notification_type='mod_add',
+        text=f'You have been added as a moderator for s/{stage.name}.',
+        link=f'/s/{stage.name}/mod/',
+    )
+    return redirect('moderations:stages_manage')
+
+
+@login_required
+@staff_required
+@require_POST
+def remove_stage_moderator(request):
+    """Remove a moderator from a stage (staff only)."""
+    stage_id = request.POST.get('stage_id')
+    username = (request.POST.get('username') or '').strip()
+    if not stage_id or not username:
+        messages.error(request, 'Stage and username are required.')
+        return redirect('moderations:stages_manage')
+
+    stage = get_object_or_404(Stage, id=stage_id)
+    target = get_object_or_404(User, username__iexact=username)
+
+    mod = StageModerator.objects.filter(
+        user=target, stage=stage, is_active=True
+    ).first()
+    if not mod:
+        messages.info(request, f'{target.username} is not an active moderator for s/{stage.name}.')
+        return redirect('moderations:stages_manage')
+
+    mod.is_active = False
+    mod.save(update_fields=['is_active'])
+
+    ModAction.objects.create(
+        moderator=request.user, action='remove_mod',
+        target_user=target, stage=stage,
+        reason=f'Removed moderator in s/{stage.name}',
+    )
+    send_notification(
+        recipient=target,
+        sender=request.user,
+        notification_type='mod_remove',
+        text=f'You have been removed as a moderator for s/{stage.name}.',
+        link='/',
+    )
+    messages.success(request, f'{target.username} removed from moderators in s/{stage.name}.')
+    return redirect('moderations:stages_manage')
+
+
+@login_required
+@staff_required
+@require_POST
+def toggle_stage_active(request, stage_id):
+    """Enable/disable a stage (staff only)."""
+    stage = get_object_or_404(Stage, id=stage_id)
+    stage.is_active = not stage.is_active
+    stage.save(update_fields=['is_active'])
+
+    action = 'enable_stage' if stage.is_active else 'disable_stage'
+    ModAction.objects.create(
+        moderator=request.user, action=action,
+        stage=stage,
+        reason=f'{"Enabled" if stage.is_active else "Disabled"} s/{stage.name}',
+    )
+    messages.success(
+        request,
+        f's/{stage.name} {"enabled" if stage.is_active else "disabled"}.'
+    )
+    return redirect('moderations:stages_manage')
 
 
 @login_required
@@ -211,13 +345,12 @@ def resolve_report(request, report_id):
         if not request.user.is_staff:
             messages.error(request, 'Only staff can issue site-wide bans.')
             return redirect('moderations:report_queue')
-        from stages.mod_utils import is_platform_super_mod
         target = report.post.author if report.post else (report.comment.user if report.comment else None)
         if not target:
             messages.error(request, 'Could not find the target user for this report.')
             return redirect('moderations:report_queue')
-        if target.is_staff or target.is_superuser or is_platform_super_mod(target):
-            messages.error(request, 'Cannot ban staff or super-mod users.')
+        if target.is_staff or target.is_superuser:
+            messages.error(request, 'Cannot ban staff users.')
             return redirect('moderations:report_queue')
         duration_key = request.POST.get('ban_duration')
         ban_until = ban_until_from_key(duration_key)
@@ -287,10 +420,9 @@ def toggle_block_post(request, post_id):
 @require_POST
 def toggle_ban_user(request, user_id):
     """Toggle user active status (ban/unban)."""
-    from stages.mod_utils import is_platform_super_mod
     target = get_object_or_404(User, id=user_id)
-    if target.is_staff or target.is_superuser or is_platform_super_mod(target):
-        messages.error(request, 'Cannot ban staff or super-mod users.')
+    if target.is_staff or target.is_superuser:
+        messages.error(request, 'Cannot ban staff users.')
         return redirect(request.POST.get('next', 'moderations:users_list'))
 
     public_reason = request.POST.get('public_reason', '').strip()[:200]
@@ -341,86 +473,6 @@ def toggle_ban_user(request, user_id):
 
     messages.success(request, f'User {"banned" if not target.is_active else "unbanned"}.')
     return redirect(request.POST.get('next', 'moderations:users_list'))
-
-
-# ───────────────────────────────────────────────────────────
-#  Super-Mod management (staff only)
-# ───────────────────────────────────────────────────────────
-
-@login_required
-@_strict_staff
-def manage_super_mods(request):
-    """List super mods and add new ones (staff only)."""
-    super_mods = StageModerator.objects.filter(
-        is_super_mod=True, is_active=True
-    ).select_related('user', 'added_by').order_by('created_at')
-
-    if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
-        target = get_object_or_404(User, username__iexact=username)
-        if target.is_staff:
-            messages.info(request, f'{target.username} is already staff.')
-        else:
-            mod, created = StageModerator.objects.get_or_create(
-                user=target, stage=None,
-                defaults={
-                    'is_super_mod': True,
-                    'added_by': request.user,
-                    'is_active': True,
-                },
-            )
-            already_super = (not created and mod.is_active and mod.is_super_mod)
-            if not created:
-                mod.is_active = True
-                mod.is_super_mod = True
-                mod.added_by = request.user
-                mod.save()
-            ModAction.objects.create(
-                moderator=request.user, action='add_super_mod',
-                target_user=target,
-                reason=f'Granted super-mod role to {target.username}',
-            )
-            if not already_super:
-                send_notification(
-                    recipient=target,
-                    sender=request.user,
-                    notification_type='mod_add',
-                    text='You have been promoted to Super Moderator.',
-                    link='/moderations/dashboard/',
-                )
-            messages.success(request, f'{target.username} is now a Super Mod.')
-        return redirect('moderations:super_mods')
-
-    nav_pending = Report.objects.filter(status='pending').count()
-    return render(request, 'moderations/super_mods.html', {
-        'super_mods': super_mods,
-        'nav_pending': nav_pending,
-    })
-
-
-@login_required
-@_strict_staff
-@require_POST
-def remove_super_mod(request, mod_id):
-    """Revoke super-mod status (staff only)."""
-    mod = get_object_or_404(StageModerator, id=mod_id, is_super_mod=True)
-    target = mod.user
-    mod.is_active = False
-    mod.save()
-    ModAction.objects.create(
-        moderator=request.user, action='remove_super_mod',
-        target_user=target,
-        reason=f'Revoked super-mod from {target.username}',
-    )
-    send_notification(
-        recipient=target,
-        sender=request.user,
-        notification_type='mod_remove',
-        text='Your Super Moderator role has been revoked.',
-        link='/',
-    )
-    messages.success(request, f'{target.username} super-mod revoked.')
-    return redirect('moderations:super_mods')
 
 
 # ───────────────────────────────────────────────────────────

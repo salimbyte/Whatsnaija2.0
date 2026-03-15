@@ -37,7 +37,7 @@
           by <strong>{{ post.author.username }}</strong>
           {% if post.stage %}
           &nbsp;&middot;&nbsp;
-          <a href="{% url 'stages:detail' post.stage.name %}">{{ post.stage.name }}</a>
+          <a href="{% url 'stages:stage_page' post.stage.name %}">{{ post.stage.name }}</a>
           {% endif %}
           &nbsp;&middot;&nbsp; {{ post.updated_at|naturaltime }}
           &nbsp;&middot;&nbsp; <span class="status-pill status-pill--blocked"><i class="fa-solid fa-ban"></i> Blocked</span>

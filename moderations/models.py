@@ -99,6 +99,8 @@ class ModAction(models.Model):
         ('remove_mod', 'Remove Stage Moderator'),
         ('add_super_mod', 'Add Super Moderator'),
         ('remove_super_mod', 'Remove Super Moderator'),
+        ('disable_stage', 'Disable Stage'),
+        ('enable_stage', 'Enable Stage'),
     ]
 
     moderator = models.ForeignKey(
