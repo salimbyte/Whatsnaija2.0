@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/mod.css' %}" />
+{% endblock link %}
+
+{% block title %}Appeal Moderation — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="mod-wrap">
+  <div class="mod-page-header">
+    <div class="mod-header-label"><i class="fa-solid fa-scale-balanced"></i> Appeals</div>
+    <h1>Appeal a Moderation Decision</h1>
+    <p>Tell us what happened and why you believe the decision should be reviewed.</p>
+  </div>
+
+  <div class="mod-box" style="margin-top:16px;">
+    <form method="post" class="mod-appeal-form">
+      {% csrf_token %}
+      <input type="hidden" name="context_type" value="{{ appeal_type }}" />
+      <input type="hidden" name="context_link" value="{{ context_link }}" />
+      <input type="hidden" name="source_id" value="{{ source_id }}" />
+
+      <div class="mod-field">
+        <label for="appealMessage">Explain your appeal</label>
+        <textarea id="appealMessage" name="message" rows="5" maxlength="500"
+          placeholder="Explain what happened, why you disagree, and any context that might help."></textarea>
+        <div class="mod-field-hint">Be specific and respectful. Staff will review this.</div>
+      </div>
+
+      <div class="mod-field">
+        <label for="appealNote">Optional details (visible to staff)</label>
+        <input id="appealNote" type="text" name="context_note" maxlength="200"
+          placeholder="Any extra details you want staff to know" />
+      </div>
+
+      <div class="mod-appeal-actions">
+        <button type="submit" class="mod-btn mod-btn--primary">
+          <i class="fa-solid fa-paper-plane"></i> Submit Appeal
+        </button>
+        <a href="/users/notifications/" class="mod-btn mod-btn--ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock content %}

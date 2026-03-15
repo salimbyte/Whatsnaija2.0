@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load filter %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+{% endblock link %}
+
+{% block title %}Saved Posts — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="content-wrap">
+    <div class="main-col">
+
+      <div class="sort-bar">
+        <span class="sort-tab active"><i class="fa-solid fa-bookmark"></i> Saved Posts</span>
+      </div>
+
+      <div class="post-list">
+        {% for bookmark in page_obj %}
+        {% with post=bookmark.post %}
+        <article class="post-row">
+          {% if post.image_count or post.og_image %}
+          <div class="post-thumb">
+            {% if post.image_count %}
+            <img src="{{ post.images.first.image.url }}" alt="{{ post.title }}" class="thumb-img" />
+            {% else %}
+            <img src="{{ post.og_image }}" alt="{{ post.title }}" class="thumb-img" />
+            {% endif %}
+          </div>
+          {% endif %}
+          <div class="post-main">
+            <div class="post-title-line">
+              <a href="{% url 'posts:detail' post.slug %}" class="post-title">{{ post.title }}</a>
+              {% if post.url %}
+              <a href="{{ post.url }}" class="post-domain-link" target="_blank" rel="noopener" title="{{ post.url }}">{{ post.url|get_domain_from_url }}</a>
+              {% endif %}
+            </div>
+            {% if post.body %}
+            <p class="post-snippet">{{ post.body|clean_excerpt:22 }}</p>
+            {% endif %}
+            <div class="post-meta">
+              <a href="/s/{{ post.stage.name }}" class="stage-tag">{{ post.stage.name }}</a>
+              <span class="meta-sep">·</span>
+              <span class="meta-likes"><i class="fa-solid fa-arrow-up"></i> {{ post.like_count }}</span>
+              <span class="meta-sep">·</span>
+              <a href="{% url 'posts:detail' post.slug %}#comments" class="meta-comments"><i class="fa-regular fa-comment"></i> {{ post.comment_count }}</a>
+              <span class="meta-sep">·</span>
+              <span class="meta-byline">by <a href="/{{ post.author.username }}">{{ post.author.username }}</a></span>
+              <span class="meta-sep">·</span>
+              <span class="meta-time"><i class="fa-regular fa-clock"></i> {{ post.created_at|custom_timesince }}</span>
+            </div>
+          </div>
+          <a class="post-row-link" href="{% url 'posts:detail' post.slug %}" aria-hidden="true" tabindex="-1"></a>
+        </article>
+        {% endwith %}
+        {% empty %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fa-regular fa-bookmark"></i></div>
+          <h3>No saved posts yet</h3>
+          <p>Bookmark posts to find them here later.</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if page_obj.has_other_pages %}
+      <div class="pager">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="pager-btn"><i class="fa-solid fa-chevron-left"></i></a>
+        {% endif %}
+        {% for page_num in page_obj.paginator.page_range %}
+          {% if page_num == page_obj.number %}
+          <span class="pager-num pager-num--current">{{ page_num }}</span>
+          {% elif page_num == 1 or page_num == page_obj.paginator.num_pages or page_num >= page_obj.number|add:"-2" and page_num <= page_obj.number|add:"2" %}
+          <a href="?page={{ page_num }}" class="pager-num">{{ page_num }}</a>
+          {% elif page_num == page_obj.number|add:"-3" or page_num == page_obj.number|add:"3" %}
+          <span class="pager-ellipsis">…</span>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="pager-btn"><i class="fa-solid fa-chevron-right"></i></a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock content %}

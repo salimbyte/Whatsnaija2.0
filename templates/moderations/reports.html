@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/mod.css' %}" />
+{% endblock link %}
+
+{% block title %}Report Queue — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="mod-wrap">
+
+  <div class="mod-page-header">
+    <div class="mod-header-label"><i class="fa-solid fa-shield-halved"></i> Platform Moderation</div>
+    <h1>Report Queue</h1>
+    <p>Review and resolve user reports across all stages.</p>
+  </div>
+
+  {% include "moderations/_mod_nav.html" %}
+
+  <div class="mod-box" style="margin-top:16px;">
+    <!-- Filter tabs -->
+    <div class="mod-filter-wrap">
+      <a href="?status=pending" class="mod-filter-tab{% if status_filter == 'pending' %} active{% endif %}">
+        <i class="fa-solid fa-hourglass-half"></i> Pending
+        {% if nav_pending %}<span class="mod-filter-badge">{{ nav_pending }}</span>{% endif %}
+      </a>
+      <a href="?status=action_taken" class="mod-filter-tab{% if status_filter == 'action_taken' %} active{% endif %}">
+        <i class="fa-solid fa-gavel"></i> Action Taken
+      </a>
+      <a href="?status=dismissed" class="mod-filter-tab{% if status_filter == 'dismissed' %} active{% endif %}">
+        <i class="fa-solid fa-circle-xmark"></i> Dismissed
+      </a>
+      <a href="?status=all" class="mod-filter-tab{% if status_filter == 'all' %} active{% endif %}">
+        <i class="fa-solid fa-list"></i> All
+      </a>
+    </div>
+
+    <!-- Report list -->
+    {% for report in page_obj %}
+    <div class="mod-report-card{% if report.status == 'pending' %} mod-report-card--urgent{% elif report.status == 'action_taken' %} mod-report-card--warn{% endif %}">
+      <div class="mod-report-top">
+        <div class="mod-report-badges">
+          <span class="mod-type-badge mod-type-badge--{{ report.report_type }}">{{ report.get_report_type_display }}</span>
+          <span class="mod-status-badge {{ report.status }}">{{ report.get_status_display }}</span>
+          <span style="font-size:11px;color:var(--vz-text-faint);">by {{ report.reporter.username }}</span>
+        </div>
+        <span class="mod-report-time">{{ report.created_at|naturaltime }}</span>
+      </div>
+      <div class="mod-report-body">
+        <div class="mod-report-subject">
+          {% if report.post %}
+            <a href="{% url 'posts:detail' report.post.slug %}">{{ report.post.title|truncatewords:12 }}</a>
+            <span class="by">by {{ report.post.author.username }}</span>
+          {% elif report.comment %}
+            Comment
+            <span class="by">by {% if report.comment.user %}{{ report.comment.user.username }}{% else %}[deleted]{% endif %}</span>
+          {% else %}
+            Appeal request
+            <span class="by">from {{ report.reporter.username }}</span>
+          {% endif %}
+        </div>
+        {% if report.comment %}<div class="mod-report-preview">{{ report.comment.body|truncatewords:30 }}</div>{% endif %}
+        {% if report.description %}<div class="mod-report-preview">&ldquo;{{ report.description|truncatewords:25 }}&rdquo;</div>{% endif %}
+        {% if report.public_reason %}
+        <div class="mod-report-note"><strong>Public reason:</strong> {{ report.public_reason }}</div>
+        {% endif %}
+        {% if report.mod_note %}
+        <div class="mod-report-note"><strong>Mod note:</strong> {{ report.mod_note }}</div>
+        {% endif %}
+        {% if report.reviewed_by %}
+        <div class="mod-reviewer"><i class="fa-solid fa-user-shield" style="margin-right:3px;font-size:10px;"></i>Reviewed by {{ report.reviewed_by.username }}</div>
+        {% endif %}
+      </div>
+      {% if report.status == 'pending' %}
+      <form method="post" action="{% url 'moderations:resolve_report' report.id %}" class="mod-report-actions">
+        {% csrf_token %}
+        <input type="text" name="public_reason" placeholder="Public reason (shown to user)" class="mod-note-input" />
+        <textarea name="mod_note" rows="1" placeholder="Private mod note (optional)…" class="mod-note-input"></textarea>
+        {% if request.user.is_staff %}
+        <select name="ban_duration" class="mod-select">
+          <option value="permanent" selected>Ban duration: Permanent (default)</option>
+          <option value="24h">Ban duration: 24 hours</option>
+          <option value="3d">Ban duration: 3 days</option>
+          <option value="7d">Ban duration: 7 days</option>
+        </select>
+        {% endif %}
+        <div class="mod-action-btns">
+          <button type="submit" name="action" value="dismiss" class="mod-btn mod-btn--success mod-btn--sm">
+            <i class="fa-solid fa-check"></i> Dismiss
+          </button>
+          <div class="mod-action-divider"></div>
+          {% if report.post %}
+          <button type="submit" name="action" value="block_post" class="mod-btn mod-btn--warn mod-btn--sm">
+            <i class="fa-solid fa-ban"></i> Block Post
+          </button>
+          <button type="submit" name="action" value="delete_post" class="mod-btn mod-btn--danger mod-btn--sm"
+            onclick="return confirm('Permanently delete this post?')">
+            <i class="fa-solid fa-trash"></i> Delete Post
+          </button>
+          {% elif report.comment %}
+          <button type="submit" name="action" value="delete_comment" class="mod-btn mod-btn--danger mod-btn--sm"
+            onclick="return confirm('Delete this comment?')">
+            <i class="fa-solid fa-trash"></i> Delete Comment
+          </button>
+          {% endif %}
+          {% if request.user.is_staff %}
+          {% if report.post or report.comment %}
+          <button type="submit" name="action" value="ban_user" class="mod-btn mod-btn--danger mod-btn--sm"
+            onclick="return confirm('Ban this user from the platform?')">
+            <i class="fa-solid fa-user-slash"></i> Ban User
+          </button>
+          {% endif %}
+          {% endif %}
+        </div>
+      </form>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="mod-empty">
+      <i class="fa-solid fa-circle-check"></i>
+      No reports match this filter.
+      <p>Try switching to a different tab above.</p>
+    </div>
+    {% endfor %}
+
+    {% if page_obj.has_other_pages %}
+    <div class="mod-pagination">
+      {% if page_obj.has_previous %}
+        <a href="?status={{ status_filter }}&page={{ page_obj.previous_page_number }}">&larr; Prev</a>
+      {% endif %}
+      <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?status={{ status_filter }}&page={{ page_obj.next_page_number }}">Next &rarr;</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock content %}

@@ -1,0 +1,53 @@
+<!-- Post Actions bar: vote + overflow menu -->
+<div class="post-actions-bar">
+  <div class="vote-btns">
+    <button type="button" id="likebtn" class="vote-btn {% if is_liked %}active{% endif %}" title="Upvote" data-post-id="{{post.id}}" data-post-slug="{{post.slug}}" aria-label="Upvote this post">
+      <i class="fa-solid fa-arrow-up"></i>
+      <span class="like-count" {% if post.total_likes == 0 %}style="display:none;"{% endif %}>{{post.total_likes}}</span>
+    </button>
+    <button type="button" id="dislikebtn" class="vote-btn {% if is_disliked %}active{% endif %}" title="Downvote" data-post-id="{{post.id}}" data-post-slug="{{post.slug}}" aria-label="Downvote this post">
+      <span class="dislike-count" {% if post.total_dislikes == 0 %}style="display:none;"{% endif %}>{{post.total_dislikes}}</span>
+      <i class="fa-solid fa-arrow-down"></i>
+    </button>
+  </div>
+  <div class="post-overflow-menu" id="post-overflow-menu">
+    <button type="button" class="overflow-trigger" id="overflow-trigger" onclick="togglePostMenu()" aria-label="More options" title="More options">
+      <i class="fa-solid fa-ellipsis"></i>
+    </button>
+    <div class="overflow-dropdown" id="overflow-dropdown">
+      <button type="button" class="overflow-item" onclick="copyPostLink(this)">
+        <i class="fa-solid fa-link"></i> Copy Link
+      </button>
+      <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ post.title|urlencode }}" target="_blank" rel="noopener" class="overflow-item">
+        <i class="fa-brands fa-x-twitter"></i> Share on X
+      </a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" rel="noopener" class="overflow-item">
+        <i class="fa-brands fa-facebook"></i> Share on Facebook
+      </a>
+      <a href="https://wa.me/?text={{ post.title|urlencode }}%20{{ request.build_absolute_uri }}" target="_blank" rel="noopener" class="overflow-item">
+        <i class="fa-brands fa-whatsapp"></i> Share on WhatsApp
+      </a>
+      <div class="overflow-divider"></div>
+      {% if user.is_authenticated %}
+      <button type="button" class="overflow-item" id="bookmark-btn" onclick="toggleBookmark()">
+        <i class="fa-{% if is_bookmarked %}solid{% else %}regular{% endif %} fa-bookmark"></i>
+        <span id="bookmark-text">{% if is_bookmarked %}Saved{% else %}Save{% endif %}</span>
+      </button>
+      {% endif %}
+      {% if user.is_authenticated %}
+      <button type="button" class="overflow-item overflow-item--report" onclick="reportPost(); togglePostMenu()">
+        <i class="fa-regular fa-flag"></i> Report
+      </button>
+      {% endif %}
+      {% if request.user == post.author or request.user.is_staff %}
+      <div class="overflow-divider"></div>
+      <a href="{% url 'posts:edit' post.id %}" class="overflow-item">
+        <i class="fa-solid fa-pen"></i> Edit post
+      </a>
+      <a href="{% url 'posts:delete' post.id %}" class="overflow-item overflow-item--danger">
+        <i class="fa-solid fa-trash"></i> Delete post
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>

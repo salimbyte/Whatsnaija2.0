@@ -1,0 +1,561 @@
+{% extends "base.html" %}
+{% load filter %}
+{% load static %}
+{% load humanize %}
+
+{% block body_attrs %}data-no-scroll-hide="1"{% endblock %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+<link rel="stylesheet" href="{% static 'style/conversation.css' %}" />
+{% endblock link %}
+
+{% block title %}{{ other_user.username }} — Messages — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="content-wrap">
+
+    <!-- ══ Main Column ══════════════════════════════════ -->
+    <div class="main-col">
+
+      <div class="chat-card">
+
+        <!-- Header -->
+        <div class="chat-header">
+          <a href="{% url 'users:inbox' %}" class="chat-back" title="Back to inbox">
+            <i class="fa-solid fa-arrow-left"></i>
+          </a>
+
+          <div class="chat-header-avatar">
+            <div class="chat-header-avatar-img" {% if not other_user.profile.avatar %}style="background:{{ other_user.username|avatar_color }}"{% endif %}>
+              {% if other_user.profile.avatar %}
+              <img src="{{ other_user.profile.avatar.url }}" alt="{{ other_user.username }}" />
+              {% else %}
+              {{ other_user.username|first|upper }}
+              {% endif %}
+            </div>
+            {% with status=other_user.profile.online_status %}
+            {% if status == 'online' %}
+            <span class="chat-online-dot chat-online-dot--online"></span>
+            {% elif status == 'away' %}
+            <span class="chat-online-dot chat-online-dot--away"></span>
+            {% else %}
+            <span class="chat-online-dot chat-online-dot--offline"></span>
+            {% endif %}
+            {% endwith %}
+          </div>
+
+          <div class="chat-header-info">
+            <a href="/{{ other_user.username }}/" class="chat-header-name">{{ other_user.username }}</a>
+            {% with status=other_user.profile.online_status %}
+            <div class="chat-header-status {% if status == 'online' %}chat-header-status--online{% elif status == 'away' %}chat-header-status--away{% endif %}">
+              {% if status == 'online' %}Online
+              {% elif status == 'away' %}Away
+              {% elif other_user.profile.last_seen %}Last seen {{ other_user.profile.last_seen|naturaltime }}
+              {% else %}Offline
+              {% endif %}
+            </div>
+            {% endwith %}
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-new-pill" id="chatNewPill">↓ New message</div>
+          {% if messages_list %}
+            {% for msg in messages_list %}
+            <div class="chat-msg chat-msg--{% if msg.sender == request.user %}sent{% else %}recv{% endif %}" data-ts="{{ msg.created_at|date:'U' }}" data-id="{{ msg.id }}">
+              <div class="chat-bubble-wrap">
+                <div class="chat-bubble">{{ msg.body }}</div>
+                <button class="chat-react-btn{% if msg.user_reacted %} chat-react-btn--active{% endif %}" type="button"
+                        data-url="{% url 'users:react_message' msg.id %}" data-csrf="{{ csrf_token }}" title="React">
+                  ❤️{% if msg.reaction_count %}<span class="chat-react-count">{{ msg.reaction_count }}</span>{% endif %}
+                </button>
+              </div>
+              <div class="chat-time">{{ msg.created_at|custom_timesince }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="chat-empty">
+              <div class="chat-empty-avatar" {% if not other_user.profile.avatar %}style="background:{{ other_user.username|avatar_color }}"{% endif %}>
+                {% if other_user.profile.avatar %}
+                <img src="{{ other_user.profile.avatar.url }}" alt="{{ other_user.username }}" />
+                {% else %}
+                {{ other_user.username|first|upper }}
+                {% endif %}
+              </div>
+              <div class="chat-empty-name">{{ other_user.username }}</div>
+              {% if other_user.profile.bio %}
+              <p class="chat-empty-bio">{{ other_user.profile.bio|truncatewords:12 }}</p>
+              {% endif %}
+              <p class="chat-empty-cta">Start the conversation — say something 👋</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Typing / seen row -->
+        <div style="padding: 0 16px 2px; display:flex; justify-content:space-between; align-items:center; min-height:22px;">
+          <div class="chat-typing chat-typing--hidden" id="chatTypingIndicator">
+            <div class="chat-typing-dots"><span></span><span></span><span></span></div>
+            {{ other_user.username }} is typing
+          </div>
+          <div class="chat-seen" id="chatSeenLabel">Seen ✓</div>
+        </div>
+
+        <!-- Compose -->
+        <form method="post" class="chat-compose" id="chatForm">
+          {% csrf_token %}
+          <div id="chatEmojiPicker" class="chat-emoji-picker">
+            <button type="button">😀</button><button type="button">😂</button><button type="button">😍</button><button type="button">❤️</button><button type="button">👍</button>
+            <button type="button">🔥</button><button type="button">😭</button><button type="button">🙏</button><button type="button">😊</button><button type="button">💀</button>
+            <button type="button">👀</button><button type="button">😤</button><button type="button">🐐</button><button type="button">💯</button><button type="button">🎉</button>
+            <button type="button">✅</button><button type="button">🥺</button><button type="button">😈</button><button type="button">💪</button><button type="button">🤔</button>
+          </div>
+          <div class="chat-compose-inner">
+            <button type="button" class="chat-emoji-btn" id="chatEmojiBtn" title="Add emoji">
+              <i class="fa-regular fa-face-smile"></i>
+            </button>
+            <textarea
+              name="body"
+              id="chatTextarea"
+              placeholder="Type a message…"
+              rows="1"
+              maxlength="2000"
+            ></textarea>
+          </div>
+          <span class="chat-char-count" id="chatCharCount"></span>
+          <button type="submit" class="chat-send-btn" id="chatSendBtn" title="Send">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
+
+      </div><!-- /.chat-card -->
+
+    </div><!-- /.main-col -->
+
+    <!-- ══ Sidebar ══════════════════════════════════════ -->
+    <div class="side-col">
+
+      <!-- Other user profile box -->
+      <div class="chat-user-box">
+        <div class="chat-user-banner">
+          {% if other_user.profile.banner %}
+          <img src="{{ other_user.profile.banner.url }}" alt="" />
+          {% endif %}
+          <div class="chat-user-avatar-wrap">
+            <div class="chat-user-avatar" {% if not other_user.profile.avatar %}style="background:{{ other_user.username|avatar_color }}"{% endif %}>
+              {% if other_user.profile.avatar %}
+              <img src="{{ other_user.profile.avatar.url }}" alt="{{ other_user.username }}" />
+              {% else %}
+              {{ other_user.username|first|upper }}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="chat-user-body">
+          <a href="/{{ other_user.username }}/" class="chat-user-name">{{ other_user.username }}</a>
+          <p class="chat-user-meta"><i class="fa-regular fa-clock"></i> Since {{ other_user.date_joined|date:"N Y" }}</p>
+          {% if other_user.profile.bio %}
+          <p class="chat-user-bio">{{ other_user.profile.bio|truncatewords:18 }}</p>
+          {% endif %}
+          <a href="/{{ other_user.username }}/" class="chat-view-profile">View full profile <i class="fa-solid fa-arrow-right"></i></a>
+          <button type="button"
+                  class="chat-user-follow {% if is_following %}chat-user-follow--following{% else %}chat-user-follow--follow{% endif %}"
+                  id="sidebarFollowBtn"
+                  data-url="{% url 'users:toggle_follow' other_user.username %}"
+                  data-csrf="{{ csrf_token }}">
+            {% if is_following %}
+            <i class="fa-solid fa-user-check"></i> <span>Following</span>
+            {% else %}
+            <i class="fa-solid fa-user-plus"></i> <span>Follow</span>
+            {% endif %}
+          </button>
+        </div>
+      </div>
+
+      {% if other_user_posts %}
+      <div class="side-box">
+        <div class="side-box-title"><i class="fa-solid fa-pen-nib"></i> Posts by {{ other_user.username }}</div>
+        <div class="rp-list">
+          {% for p in other_user_posts %}
+          <a href="{% url 'posts:detail' p.slug %}" class="rp-item">
+            <span class="rp-title">{{ p.title|truncatewords:8 }}</span>
+            <span class="rp-meta">{{ p.stage.name }} · {{ p.created_at|custom_timesince }}</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% include "includes/sidebar_footer.html" %}
+
+    </div><!-- /.side-col -->
+
+  </div>
+</div>
+
+<script>
+(function () {
+  var chatMessages = document.getElementById('chatMessages');
+  var newPill = document.getElementById('chatNewPill');
+
+  function scrollToBottom(smooth) {
+    if (!chatMessages) return;
+    chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+  }
+
+  function isNearBottom() {
+    return chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight < 100;
+  }
+
+  /* ── Safe HTML escape ─── */
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* ── Smart timestamp grouping ─── */
+  function groupTimestamps(fromIndex) {
+    var msgs = Array.from(chatMessages.querySelectorAll('.chat-msg[data-ts]'));
+    var GAP = 5 * 60;
+    /* If fromIndex is given, start one before so the prior tail is also updated */
+    var start = (fromIndex != null && fromIndex > 0) ? fromIndex - 1 : 0;
+    for (var i = start; i < msgs.length; i++) {
+      var msg = msgs[i];
+      var ts = parseInt(msg.dataset.ts, 10);
+      var next = msgs[i + 1];
+      var timeEl = msg.querySelector('.chat-time');
+      if (!timeEl) continue;
+      var bigGap = next ? (parseInt(next.dataset.ts, 10) - ts) >= GAP : true;
+      timeEl.style.display = (!next || bigGap) ? 'block' : 'none';
+    }
+  }
+
+  groupTimestamps();
+  requestAnimationFrame(function () { requestAnimationFrame(function () { scrollToBottom(false); }); });
+
+  /* ── New-message pill ─── */
+  if (newPill) {
+    newPill.addEventListener('click', function () {
+      scrollToBottom(true);
+      newPill.classList.remove('visible');
+    });
+    chatMessages.addEventListener('scroll', function () {
+      if (isNearBottom()) newPill.classList.remove('visible');
+    });
+  }
+
+  /* ── Auto-resize textarea ─── */
+  var textarea = document.getElementById('chatTextarea');
+  var charCount = document.getElementById('chatCharCount');
+  var sendBtn = document.getElementById('chatSendBtn');
+
+  if (textarea) {
+    textarea.addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+      var len = this.value.length;
+      if (charCount) {
+        if (len >= 1900) {
+          charCount.textContent = (2000 - len) + ' left';
+          charCount.className = 'chat-char-count' + (len >= 2000 ? ' chat-char-count--over' : ' chat-char-count--warn');
+        } else {
+          charCount.textContent = '';
+          charCount.className = 'chat-char-count';
+        }
+      }
+    });
+
+    textarea.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (this.value.trim()) sendMessage();
+      }
+    });
+
+    textarea.focus();
+  }
+
+  /* ── AJAX send ─── */
+  var form = document.getElementById('chatForm');
+  var csrfToken = form ? form.querySelector('[name=csrfmiddlewaretoken]').value : '';
+
+  function buildBubble(body, ts, id, isMine) {
+    var div = document.createElement('div');
+    div.className = 'chat-msg chat-msg--' + (isMine ? 'sent' : 'recv');
+    div.dataset.ts = ts;
+    div.dataset.id = id || 'tmp-' + Date.now();
+    div.innerHTML =
+      '<div class="chat-bubble-wrap">' +
+        '<div class="chat-bubble">' + esc(body) + '</div>' +
+      '</div>' +
+      '<div class="chat-time" style="display:block">just now</div>';
+    return div;
+  }
+
+  function sendMessage() {
+    if (!textarea || !textarea.value.trim()) return;
+    var body = textarea.value.trim();
+    if (body.length > 2000) return;
+
+    /* Optimistic UI: show in DOM immediately */
+    var empty = chatMessages ? chatMessages.querySelector('.chat-empty') : null;
+    if (empty) empty.remove();
+    var bubble = buildBubble(body, Math.floor(Date.now() / 1000), null, true);
+    if (chatMessages) chatMessages.appendChild(bubble);
+    scrollToBottom(true);
+
+    /* Clear & disable input */
+    textarea.value = '';
+    textarea.style.height = 'auto';
+    if (charCount) { charCount.textContent = ''; charCount.className = 'chat-char-count'; }
+    if (sendBtn) { sendBtn.disabled = true; sendBtn.classList.add('sending'); }
+
+    var fd = new FormData();
+    fd.append('body', body);
+    fd.append('csrfmiddlewaretoken', csrfToken);
+
+    fetch(window.location.href, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin',
+      body: fd,
+    })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (data) {
+      if (data && data.ok) {
+        /* Update the optimistic bubble with real id/ts */
+        bubble.dataset.id = data.id;
+        bubble.dataset.ts = data.ts;
+        if (data.id > maxId) maxId = data.id;
+        /* New message is unread — hide "Seen" until poll confirms */
+        latestSentId = data.id;
+        if (seenLabel) seenLabel.classList.remove('visible');
+        groupTimestamps();
+      }
+    })
+    .catch(function () {})
+    .finally(function () {
+      if (sendBtn) { sendBtn.disabled = false; sendBtn.classList.remove('sending'); }
+      textarea.focus();
+    });
+  }
+
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      sendMessage();
+    });
+  }
+
+  /* ── Emoji picker ─── */
+  var emojiBtn = document.getElementById('chatEmojiBtn');
+  var emojiPicker = document.getElementById('chatEmojiPicker');
+  if (emojiBtn && emojiPicker) {
+    emojiBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      emojiPicker.classList.toggle('open');
+    });
+    emojiPicker.querySelectorAll('button').forEach(function (eb) {
+      eb.addEventListener('click', function () {
+        var emoji = this.textContent;
+        if (textarea) {
+          var start = textarea.selectionStart;
+          var end = textarea.selectionEnd;
+          textarea.value = textarea.value.slice(0, start) + emoji + textarea.value.slice(end);
+          textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+          textarea.focus();
+          textarea.dispatchEvent(new Event('input'));
+        }
+        emojiPicker.classList.remove('open');
+      });
+    });
+    document.addEventListener('click', function (e) {
+      if (emojiPicker.classList.contains('open') && !emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+        emojiPicker.classList.remove('open');
+      }
+    });
+  }
+
+  /* ── Follow button AJAX ─── */
+  var followBtn = document.getElementById('sidebarFollowBtn');
+  if (followBtn) {
+    followBtn.addEventListener('click', function () {
+      var btn = this;
+      fetch(btn.dataset.url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': btn.dataset.csrf, 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin',
+      })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        var following = data.following;
+        btn.className = 'chat-user-follow ' + (following ? 'chat-user-follow--following' : 'chat-user-follow--follow');
+        btn.querySelector('i').className = following ? 'fa-solid fa-user-check' : 'fa-solid fa-user-plus';
+        btn.querySelector('span').textContent = following ? 'Following' : 'Follow';
+      });
+    });
+  }
+
+  /* ── Reaction buttons ─── */
+  function bindReactions(root) {
+    root.querySelectorAll('.chat-react-btn:not([data-bound])').forEach(function (btn) {
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () {
+        var b = this;
+        fetch(b.dataset.url, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': b.dataset.csrf, 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin',
+        })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data) return;
+          b.classList.toggle('chat-react-btn--active', data.reacted);
+          var countEl = b.querySelector('.chat-react-count');
+          if (data.count > 0) {
+            if (!countEl) { countEl = document.createElement('span'); countEl.className = 'chat-react-count'; b.appendChild(countEl); }
+            countEl.textContent = data.count;
+          } else if (countEl) { countEl.remove(); }
+        });
+      });
+    });
+  }
+  bindReactions(document);
+
+  /* ── Typing signal ── send POST while user types */
+  var typingIndicator = document.getElementById('chatTypingIndicator');
+  var seenLabel = document.getElementById('chatSeenLabel');
+  var typingUrl = '/users/messages/{{ other_user.username|escapejs }}/typing/';
+  var lastTypingSent = 0;
+
+  function sendTypingSignal() {
+    var now = Date.now();
+    if (now - lastTypingSent < 2000) return;
+    lastTypingSent = now;
+    fetch(typingUrl, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin',
+    }).catch(function () {});
+  }
+
+  if (textarea) {
+    textarea.addEventListener('input', function () {
+      if (this.value.trim()) sendTypingSignal();
+    });
+  }
+
+  /* ── Typing indicator display ── */
+  var typingHideTimer = null;
+  function setTyping(active) {
+    if (!typingIndicator) return;
+    if (active) {
+      typingIndicator.classList.remove('chat-typing--hidden');
+      clearTimeout(typingHideTimer);
+      typingHideTimer = setTimeout(function () {
+        typingIndicator.classList.add('chat-typing--hidden');
+      }, 5000);
+    } else {
+      clearTimeout(typingHideTimer);
+      typingIndicator.classList.add('chat-typing--hidden');
+    }
+  }
+
+  /* Track the highest ID of our own sent messages */
+  var latestSentId = 0;
+  if (chatMessages) {
+    chatMessages.querySelectorAll('.chat-msg--sent[data-id]').forEach(function (el) {
+      var id = parseInt(el.dataset.id, 10);
+      if (!isNaN(id) && id > latestSentId) latestSentId = id;
+    });
+  }
+
+  function updateSeen(lastReadId) {
+    if (!seenLabel || !chatMessages) return;
+    if (latestSentId > 0 && lastReadId >= latestSentId) {
+      /* The other person has read up to (at least) our latest message */
+      seenLabel.classList.add('visible');
+    } else {
+      /* Latest sent message hasn't been read yet */
+      seenLabel.classList.remove('visible');
+    }
+  }
+
+  /* ── Real-time message polling ─── */
+  var maxId = 0;
+  if (chatMessages) {
+    chatMessages.querySelectorAll('[data-id]').forEach(function (el) {
+      var id = parseInt(el.dataset.id, 10);
+      if (!isNaN(id) && id > maxId) maxId = id;
+    });
+  }
+
+  var otherUsername = '{{ other_user.username|escapejs }}';
+  var pollUrl = '/users/messages/' + otherUsername + '/poll/';
+
+  function appendMessage(m) {
+    var empty = chatMessages ? chatMessages.querySelector('.chat-empty') : null;
+    if (empty) empty.remove();
+
+    var atBottom = isNearBottom();
+    /* Capture count before insert so groupTimestamps only re-checks the tail */
+    var beforeCount = chatMessages ? chatMessages.querySelectorAll('.chat-msg[data-ts]').length : 0;
+    var bubble = buildBubble(m.body, m.ts, m.id, m.is_mine);
+    if (chatMessages) chatMessages.appendChild(bubble);
+    groupTimestamps(beforeCount);
+
+    if (atBottom) {
+      scrollToBottom(true);
+    } else if (!m.is_mine && newPill) {
+      newPill.classList.add('visible');
+    }
+    if (m.id > maxId) maxId = m.id;
+  }
+
+  function poll() {
+    fetch(pollUrl + '?since=' + maxId, { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        if (data.messages && data.messages.length) {
+          data.messages.forEach(function (m) { appendMessage(m); });
+        }
+        setTyping(!!data.other_typing);
+        if (data.last_read_id) updateSeen(data.last_read_id);
+      })
+      .catch(function () {});
+  }
+
+  setInterval(poll, 2000);
+
+  /* Scroll to bottom on load */
+  scrollToBottom(false);
+
+  /* ── Keyboard avoidance (visualViewport API) ── */
+  if (window.visualViewport) {
+    var pw = document.querySelector('.page-wrapper');
+    function onVV() {
+      if (!pw || window.innerWidth > 768) return;
+      var vv = window.visualViewport;
+      var kbH = Math.round(window.innerHeight - vv.height - vv.offsetTop);
+      if (kbH > 80) {
+        /* Keyboard open: shrink wrapper to sit just above the keyboard */
+        pw.style.bottom = kbH + 'px';
+        scrollToBottom(false);
+      } else {
+        /* Keyboard closed: restore bottom-nav offset */
+        var bnH = window.innerWidth <= 480 ? 52 : 58;
+        pw.style.bottom = 'calc(' + bnH + 'px + env(safe-area-inset-bottom, 0px))';
+      }
+    }
+    window.visualViewport.addEventListener('resize', onVV);
+    window.visualViewport.addEventListener('scroll', onVV);
+  }
+
+})();
+</script>
+{% endblock content %}

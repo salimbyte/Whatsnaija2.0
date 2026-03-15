@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+{% load filter %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/mod.css' %}" />
+{% endblock link %}
+
+{% block title %}Super Mods — WhatsNaija Moderation{% endblock title %}
+
+{% block content %}
+<div class="mod-wrap">
+
+  <div class="mod-page-header">
+    <div class="mod-header-label"><i class="fa-solid fa-shield-halved"></i> Platform Moderation</div>
+    <h1>Super Moderators</h1>
+    <p>Super mods have platform-wide moderation access across every stage.</p>
+  </div>
+
+  {% include "moderations/_mod_nav.html" %}
+
+  <div class="mod-box" style="margin-top:16px;">
+    <div class="mod-box-title"><span><i class="fa-solid fa-star"></i> Super Mod Team</span></div>
+
+    <div class="mod-warning-strip">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span><strong>Staff only.</strong> Super-mod privileges grant platform-wide moderation access to every stage. Only grant this role to trusted team members.</span>
+    </div>
+
+    {% for sm in super_mods %}
+    <div class="sm-row">
+      <div class="sm-avatar" {% if not sm.user.profile.avatar %}style="background:{{ sm.user.username|avatar_color }}"{% endif %}>
+        {% if sm.user.profile.avatar %}
+          <img src="{{ sm.user.profile.avatar.url }}" alt="{{ sm.user.username }}" />
+        {% else %}
+          {{ sm.user.username|first|upper }}
+        {% endif %}
+      </div>
+      <div class="sm-info">
+        <a href="/{{ sm.user.username }}/" class="sm-name">{{ sm.user.username }}</a>
+        <div class="sm-meta">Added by {{ sm.added_by.username|default:"system" }} &middot; {{ sm.created_at|timesince }} ago</div>
+      </div>
+      <span class="status-pill status-pill--staff" style="flex-shrink:0;"><i class="fa-solid fa-star"></i> Super Mod</span>
+      <form method="post" action="{% url 'moderations:remove_super_mod' sm.id %}" style="margin:0;flex-shrink:0;">
+        {% csrf_token %}
+        <button type="submit" class="mod-btn mod-btn--danger mod-btn--sm"
+          onclick="return confirm('Revoke super-mod from {{ sm.user.username }}?')">
+          <i class="fa-solid fa-xmark"></i> Revoke
+        </button>
+      </form>
+    </div>
+    {% empty %}
+    <div class="mod-empty">
+      <i class="fa-solid fa-users-slash"></i>
+      No super mods assigned yet.
+      <p>Grant the role using the form below.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Grant form -->
+  <div class="mod-box">
+    <div class="mod-box-title"><span><i class="fa-solid fa-user-plus"></i> Grant Super-Mod Role</span></div>
+    <div style="padding:16px 18px;">
+      <form method="post" style="display:flex;gap:8px;flex-wrap:wrap;">
+        {% csrf_token %}
+        <div class="mod-search-wrap" style="flex:1;min-width:180px;">
+          <i class="fa-solid fa-user"></i>
+          <input type="text" name="username" placeholder="Exact username" required autocomplete="off" class="mod-search-input" />
+        </div>
+        <button type="submit" class="mod-btn mod-btn--primary">
+          <i class="fa-solid fa-user-plus"></i> Grant Super-Mod
+        </button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock content %}

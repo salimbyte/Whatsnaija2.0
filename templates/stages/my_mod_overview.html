@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+{% load filter %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+<style>
+.mod-wrap { max-width: 860px; margin: 0 auto; padding: 28px 12px 40px; }
+
+/* ── Header ── */
+.mod-header {
+  background: linear-gradient(135deg, #0C4B33 0%, #15805a 100%);
+  border-radius: var(--vz-radius);
+  padding: 24px 28px 20px;
+  margin-bottom: 20px;
+  color: #fff;
+  position: relative; overflow: hidden;
+}
+.mod-header::after {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 160px; height: 160px;
+  background: rgba(255,255,255,0.05); border-radius: 50%;
+  pointer-events: none;
+}
+.mod-header-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+  color: rgba(255,255,255,.65); margin-bottom: 6px;
+}
+.mod-header h1 { font-size: 22px; font-weight: 800; margin: 0 0 4px; }
+.mod-header p  { font-size: 13px; color: rgba(255,255,255,.7); margin: 0; }
+
+/* ── Stage cards ── */
+.mod-stage-list {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.mod-stage-card {
+  background: var(--vz-surface);
+  border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius);
+  padding: 18px 20px;
+  display: flex; align-items: center; gap: 16px;
+  text-decoration: none; color: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+.mod-stage-card:hover {
+  border-color: var(--vz-accent);
+  box-shadow: 0 2px 8px rgba(12,75,51,.08);
+}
+.mod-stage-avatar {
+  width: 48px; height: 48px; border-radius: var(--vz-radius-sm);
+  object-fit: cover; flex-shrink: 0;
+  background: var(--vz-accent-soft);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: var(--vz-accent);
+  overflow: hidden;
+}
+.mod-stage-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--vz-radius-sm); }
+.mod-stage-info { flex: 1; min-width: 0; }
+.mod-stage-name {
+  font-size: 15px; font-weight: 700; color: var(--vz-text);
+  display: flex; align-items: center; gap: 8px; margin-bottom: 3px;
+}
+.mod-stage-sub { font-size: 12px; color: var(--vz-text-faint); }
+.mod-stage-actions {
+  display: flex; gap: 8px; align-items: center; flex-shrink: 0;
+}
+.mod-stage-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 14px; border-radius: var(--vz-radius-sm);
+  font-size: 12px; font-weight: 600; text-decoration: none;
+  border: 1px solid var(--vz-border); color: var(--vz-text-muted);
+  background: var(--vz-bg); transition: all .15s;
+}
+.mod-stage-btn:hover { border-color: var(--vz-accent); color: var(--vz-accent); background: var(--vz-accent-soft); }
+.mod-stage-btn--primary {
+  background: var(--vz-accent); color: #fff; border-color: var(--vz-accent);
+}
+.mod-stage-btn--primary:hover { background: #0a3f2b; border-color: #0a3f2b; color: #fff; }
+.mod-stage-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap;
+}
+.mod-stage-badge--super {
+  background: linear-gradient(135deg, #0C4B33, #1a8055); color: #fff;
+}
+.mod-stage-badge--mod {
+  background: var(--vz-accent-soft); color: var(--vz-accent);
+  border: 1px solid var(--vz-accent-glow, rgba(12,75,51,.2));
+}
+.mod-stage-badge--owner {
+  background: linear-gradient(135deg, #eab308, #ca8a04); color: #fff;
+}
+.pending-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 999px;
+  background: #dc2626; color: #fff;
+  font-size: 10px; font-weight: 700;
+}
+@media (max-width: 600px) {
+  .mod-stage-card { flex-wrap: wrap; }
+  .mod-stage-actions { width: 100%; justify-content: flex-end; }
+}
+
+
+</style>
+{% endblock link %}
+
+{% block title %}My Mod Stages — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="mod-wrap">
+
+  <div class="mod-header">
+    <div class="mod-header-label"><i class="fa-solid fa-shield-halved"></i> &nbsp;Moderation</div>
+    <h1>My Moderated Stages</h1>
+    <p>Manage the stages you moderate below.</p>
+  </div>
+
+  <div class="mod-stage-list">
+    {% for item in stages_data %}
+    {% with stage=item.mod.stage %}
+    <div class="mod-stage-card">
+
+      <!-- Avatar -->
+      <div class="mod-stage-avatar" style="background:{{ stage.name|avatar_color }}">
+        {% if stage.image %}
+          <img src="{{ stage.image.url }}" alt="{{ stage.name }}" />
+        {% else %}
+          {{ stage.name|avatar_initials }}
+        {% endif %}
+      </div>
+
+      <!-- Info -->
+      <div class="mod-stage-info">
+        <div class="mod-stage-name">
+          {{ stage.name }}
+          {% if item.mod.is_super_mod %}
+            <span class="mod-stage-badge mod-stage-badge--super"><i class="fa-solid fa-star"></i> Super Mod</span>
+          {% elif stage.admin == request.user %}
+            <span class="mod-stage-badge mod-stage-badge--owner"><i class="fa-solid fa-crown"></i> Owner</span>
+          {% else %}
+            <span class="mod-stage-badge mod-stage-badge--mod"><i class="fa-solid fa-shield-halved"></i> Mod</span>
+          {% endif %}
+          {% if item.pending > 0 %}
+            <span class="pending-badge"><i class="fa-solid fa-flag"></i> {{ item.pending }} pending</span>
+          {% endif %}
+        </div>
+        <div class="mod-stage-sub">
+          {{ stage.members_count }} member{{ stage.members_count|pluralize }}
+          {% if stage.description %}&nbsp;&middot;&nbsp;{{ stage.description|truncatechars:60 }}{% endif %}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="mod-stage-actions">
+        <a href="{% url 'stages:mod_queue' stage.name %}" class="mod-stage-btn">
+          <i class="fa-solid fa-flag"></i> Queue
+          {% if item.pending > 0 %}<span style="background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:999px;">{{ item.pending }}</span>{% endif %}
+        </a>
+        <a href="{% url 'stages:mod_dashboard' stage.name %}" class="mod-stage-btn mod-stage-btn--primary">
+          <i class="fa-solid fa-gauge-high"></i> Dashboard
+        </a>
+      </div>
+
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock content %}

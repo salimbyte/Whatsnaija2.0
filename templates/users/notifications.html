@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% load filter %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+<link rel="stylesheet" href="{% static 'style/notifications.css' %}" />
+{% endblock link %}
+
+{% block title %}Notifications — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="content-wrap">
+
+    <!-- ══ Main Column ══════════════════════════════════ -->
+    <div class="main-col">
+
+      <div class="notif-card">
+
+        <!-- Header -->
+        <div class="notif-header">
+          <div class="notif-header-icon"><i class="fa-solid fa-bell"></i></div>
+          <span class="notif-header-title">
+            Notifications
+          </span>
+          {% if unread_count %}
+          <button class="notif-mark-all" id="markAllRead" title="Mark all as read">
+            <i class="fa-solid fa-check-double"></i> Mark all read
+          </button>
+          {% endif %}
+          {% if unread_count %}
+          <span class="notif-unread-badge">{{ unread_count }}</span></span>
+          {% endif %}
+        </div>
+
+        {% if notifications %}
+        <!-- Filter tabs -->
+        <div class="notif-tabs" id="notifTabs">
+          <button class="notif-tab active" data-filter="all">
+            All
+            <span class="notif-tab-count">{{ notifications|length }}</span>
+          </button>
+          <button class="notif-tab" data-filter="like">
+            <i class="fa-solid fa-thumbs-up"></i> Likes
+            {% if type_counts.like %}<span class="notif-tab-count">{{ type_counts.like }}</span>{% endif %}
+          </button>
+          <button class="notif-tab" data-filter="comment">
+            <i class="fa-regular fa-comment"></i> Comments
+            {% if type_counts.comment %}<span class="notif-tab-count">{{ type_counts.comment }}</span>{% endif %}
+          </button>
+          <button class="notif-tab" data-filter="reply">
+            <i class="fa-solid fa-reply"></i> Replies
+            {% if type_counts.reply %}<span class="notif-tab-count">{{ type_counts.reply }}</span>{% endif %}
+          </button>
+          <button class="notif-tab" data-filter="follow">
+            <i class="fa-solid fa-user-plus"></i> Follows
+            {% if type_counts.follow %}<span class="notif-tab-count">{{ type_counts.follow }}</span>{% endif %}
+          </button>
+          <button class="notif-tab" data-filter="mention">
+            <i class="fa-solid fa-at"></i> Mentions
+            {% if type_counts.mention %}<span class="notif-tab-count">{{ type_counts.mention }}</span>{% endif %}
+          </button>
+        </div>
+
+        <!-- List -->
+        <div id="notifList">
+          {% for notif in notifications %}
+          <div class="notif-row {% if not notif.is_read %}notif-row--unread{% endif %} {% if notif.notification_type in 'stage_ban,post_removed,mod_warn' %}notif-row--mod{% endif %}"
+               data-type="{{ notif.notification_type }}">
+
+            <a href="{{ notif.link|default:'#' }}" class="notif-row-main">
+
+            <!-- Avatar + type icon -->
+            <div class="notif-avatar-wrap">
+              <div class="notif-avatar" {% if notif.sender and not notif.sender.profile.avatar %}style="background:{{ notif.sender.username|avatar_color }}"{% endif %}>
+                {% if notif.sender and notif.sender.profile.avatar %}
+                <img src="{{ notif.sender.profile.avatar.url }}" alt="{{ notif.sender.username }}" />
+                {% elif notif.sender %}
+                {{ notif.sender.username|first|upper }}
+                {% elif notif.notification_type in 'stage_ban,post_removed,mod_warn' %}
+                <i class="fa-solid fa-shield-halved" style="font-size:16px;"></i>
+                {% else %}
+                <i class="fa-solid fa-bell" style="font-size:14px;"></i>
+                {% endif %}
+              </div>
+              <span class="notif-type-dot notif-type-dot--{{ notif.notification_type }}">
+                {% if notif.notification_type == 'like' %}<i class="fa-solid fa-thumbs-up"></i>
+                {% elif notif.notification_type == 'comment' %}<i class="fa-regular fa-comment"></i>
+                {% elif notif.notification_type == 'reply' %}<i class="fa-solid fa-reply"></i>
+                {% elif notif.notification_type == 'follow' %}<i class="fa-solid fa-user-plus"></i>
+                {% elif notif.notification_type == 'message' %}<i class="fa-solid fa-envelope"></i>
+                {% elif notif.notification_type == 'mention' %}<i class="fa-solid fa-at"></i>
+                {% elif notif.notification_type == 'mod_add' %}<i class="fa-solid fa-shield-halved"></i>
+                {% elif notif.notification_type == 'mod_remove' %}<i class="fa-solid fa-shield-halved"></i>
+                {% elif notif.notification_type == 'stage_ban' %}<i class="fa-solid fa-ban"></i>
+                {% elif notif.notification_type == 'stage_unban' %}<i class="fa-solid fa-circle-check"></i>
+                {% elif notif.notification_type == 'post_removed' %}<i class="fa-solid fa-trash-can"></i>
+                {% elif notif.notification_type == 'mod_warn' %}<i class="fa-solid fa-triangle-exclamation"></i>
+                {% else %}<i class="fa-solid fa-bell"></i>{% endif %}
+              </span>
+            </div>
+
+            <!-- Text + time -->
+            <div class="notif-row-body">
+              <div class="notif-row-text">
+                {% if notif.sender %}<span class="notif-actor">{{ notif.sender.username }}</span> {{ notif.text|strip_sender:notif.sender.username }}{% else %}{{ notif.text }}{% endif %}
+              </div>
+              <div class="notif-row-time">{{ notif.created_at|naturaltime }}</div>
+            </div>
+
+            {% if not notif.is_read %}
+            <span class="notif-unread-dot"></span>
+            {% endif %}
+
+            </a>
+
+            {% if notif.notification_type in 'stage_ban,post_removed,mod_warn' %}
+            <a class="notif-appeal-btn"
+               href="{% url 'moderations:appeal' %}?type={{ notif.notification_type }}&source={{ notif.id }}{% if notif.link %}&link={{ notif.link|urlencode }}{% endif %}">
+              Appeal
+            </a>
+            {% endif %}
+
+          </div>
+          {% endfor %}
+        </div><!-- /#notifList -->
+
+        {% else %}
+        <div class="notif-empty">
+          <div class="notif-empty-icon"><i class="fa-regular fa-bell-slash"></i></div>
+          <h4>No notifications yet</h4>
+          <p>When someone likes, comments, or follows you, it'll show up here.</p>
+        </div>
+        {% endif %}
+
+      </div><!-- /.notif-card -->
+
+    </div><!-- /.main-col -->
+
+    <!-- ══ Sidebar ══════════════════════════════════════ -->
+    <div class="side-col">
+
+      <div class="side-box user-card">
+        <div class="user-card-stripe"></div>
+        <div class="user-card-head">
+          <div class="user-card-avatar">
+            {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
+            {% else %}
+            <div class="avatar-letter" style="background:{{ user.username|avatar_color }}">{{ user.username|first|upper }}</div>
+            {% endif %}
+          </div>
+          <div class="user-card-info">
+            <a href="/{{ user.username }}" class="user-card-name">{{ user.username }}</a>
+            <span class="user-card-label">{% if user.is_staff %}Moderator{% elif user.is_verified %}Verified{% else %}Member{% endif %}</span>
+          </div>
+        </div>
+        <div class="user-card-actions">
+          <a href="{% url 'posts:create' %}" class="user-action-primary"><i class="fa-solid fa-pen"></i> New Post</a>
+        </div>
+      </div>
+
+      {% if stages %}
+      <div class="side-box">
+        <div class="side-box-title"><i class="fa-solid fa-layer-group"></i> stages</div>
+        <div class="side-box-body" style="padding: 6px;">
+          <ul class="other-stages-list">
+            {% for stage in stages %}
+            <li>
+              <a href="/s/{{ stage.name }}">
+                <span class="stage-mini-avatar" style="background:{{ stage.name|avatar_color }}">{{ stage.name|avatar_initials }}</span>
+                <span class="stage-mini-body">
+                  <span class="stage-mini-name">{% if stage.title %}{{ stage.title }}{% else %}{{ stage.name }}{% endif %}</span>
+                </span>
+                {% if stage.members_count %}<span class="stage-mini-count">{{ stage.members_count }}</span>{% endif %}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+
+      {% include "includes/sidebar_footer.html" %}
+
+    </div><!-- /.side-col -->
+
+  </div>
+</div>
+
+<script>
+(function () {
+  var tabs  = document.querySelectorAll('.notif-tab');
+  var rows  = document.querySelectorAll('#notifList .notif-row');
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var filter = this.dataset.filter;
+      tabs.forEach(function (t) { t.classList.remove('active'); });
+      this.classList.add('active');
+
+      rows.forEach(function (row) {
+        if (filter === 'all') {
+          row.classList.remove('notif-row--hidden');
+        } else {
+          row.classList.toggle('notif-row--hidden', row.dataset.type !== filter);
+        }
+      });
+    });
+  });
+
+  /* ── Mark all as read ─────────────────────── */
+  var markBtn = document.getElementById('markAllRead');
+  if (markBtn) {
+    markBtn.addEventListener('click', function () {
+      var btn = this;
+      fetch('{% url "users:mark_all_read" %}', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      }).then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.ok) {
+            document.querySelectorAll('.notif-row--unread').forEach(function (el) {
+              el.classList.remove('notif-row--unread');
+            });
+            document.querySelectorAll('.notif-unread-dot').forEach(function (el) {
+              el.remove();
+            });
+            var badge = document.querySelector('.notif-unread-badge');
+            if (badge) badge.style.display = 'none';
+            btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Done';
+            btn.classList.add('notif-mark-all--done');
+          }
+        });
+    });
+  }
+})();
+</script>
+{% endblock content %}

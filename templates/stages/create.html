@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+{% load static %}
+{% load filter %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/create.css' %}" />
+{% endblock link %}
+
+{% block title %}Create Community — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="composer">
+  <!-- Main form card -->
+  <div class="composer-body">
+
+    <!-- Top bar -->
+    <div class="composer-topbar">
+      <div class="composer-identity">
+        <div class="composer-avatar">
+          {% if user.userprofile.avatar %}
+          <img src="{{ user.userprofile.avatar.url }}" alt="" />
+          {% else %}
+          <span class="avatar-letter" style="background:{{ user.username|avatar_color }}">{{ user.username|first|upper }}</span>
+          {% endif %}
+        </div>
+        <div class="composer-meta">
+          <span class="composer-username">{{ user.username }}</span>
+          <span class="composer-action">is creating a community</span>
+        </div>
+      </div>
+      <a href="/" class="composer-close" title="Cancel">
+        <i class="fa-solid fa-xmark"></i>
+      </a>
+    </div>
+
+    {% if messages %}
+    <div style="padding: 12px 24px 0;">
+      {% for message in messages %}
+      <div class="form-alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+        <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="composer-form" id="createCommunityForm" novalidate>
+      {% csrf_token %}
+
+      <!-- Community Name -->
+      <div class="title-section">
+        <div class="content-label">
+          <i class="fa-solid fa-at"></i>
+          Community Name
+        </div>
+        <div class="community-name-wrapper">
+          <span class="name-prefix">s/</span>
+          <input
+            type="text"
+            name="name"
+            id="nameInput"
+            class="community-name-input"
+            placeholder="my_community"
+            maxlength="20"
+            autocomplete="off"
+            spellcheck="false"
+            value="{{ form.name.value|default:'' }}"
+          />
+          <span class="name-counter"><span id="nameCount">0</span><span class="char-max">/20</span></span>
+        </div>
+        {% if form.name.errors %}<span class="field-error">{{ form.name.errors.0 }}</span>{% endif %}
+        <p class="field-hint">3–20 chars · lowercase · underscores only · cannot be changed later</p>
+      </div>
+
+      <!-- Display Title -->
+      <div class="title-section">
+        <div class="content-label">
+          <i class="fa-solid fa-heading"></i>
+          Display Title
+        </div>
+        <input
+          type="text"
+          name="title"
+          id="titleInput"
+          class="title-input"
+          placeholder="Your community's full title"
+          maxlength="200"
+          value="{{ form.title.value|default:'' }}"
+          required
+        />
+        <div class="title-underline"></div>
+        <div class="title-meta">
+          <span class="char-indicator"><span id="charCount">0</span><span class="char-max">/200</span></span>
+        </div>
+        {% if form.title.errors %}<span class="field-error">{{ form.title.errors.0 }}</span>{% endif %}
+      </div>
+
+      <!-- Description -->
+      <div class="content-section">
+        <div class="content-label">
+          <i class="fa-solid fa-paragraph"></i>
+          Description <span class="optional-tag">optional</span>
+        </div>
+        <textarea
+          name="description"
+          id="descriptionInput"
+          class="stage-description-input"
+          placeholder="What is this community about? What kind of posts belong here?"
+          rows="4"
+          maxlength="500"
+        >{{ form.description.value|default:'' }}</textarea>
+        <div class="title-meta" style="margin-top: 4px;">
+          <span class="char-indicator"><span id="descCount">0</span><span class="char-max">/500</span></span>
+        </div>
+        {% if form.description.errors %}<span class="field-error">{{ form.description.errors.0 }}</span>{% endif %}
+      </div>
+
+      <!-- Cover Image -->
+      <div class="content-section" style="border-bottom: none;">
+        <div class="content-label">
+          <i class="fa-solid fa-image"></i>
+          Cover Image <span class="optional-tag">optional</span>
+        </div>
+        <div class="cover-upload-zone" id="coverZone">
+          <input
+            type="file"
+            name="image"
+            id="coverInput"
+            accept="image/*"
+            class="media-input"
+          />
+          <img class="cover-preview" id="coverPreview" src="" alt="" />
+          <div class="cover-empty" id="coverEmpty">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span class="cover-upload-title">Click or drag to upload</span>
+            <span class="cover-upload-sub">PNG, JPG, GIF · max 5 MB</span>
+          </div>
+          <button type="button" class="cover-remove" id="coverRemove" title="Remove image">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+        {% if form.image.errors %}<span class="field-error">{{ form.image.errors.0 }}</span>{% endif %}
+      </div>
+
+      <!-- Footer -->
+      <div class="composer-footer">
+        <div class="footer-left">
+          <a href="/" class="rules-link">
+            <i class="fa-solid fa-arrow-left"></i> Cancel
+          </a>
+        </div>
+        <div class="footer-right">
+          <button type="submit" class="publish-btn" id="submitBtn">
+            <span class="btn-text">Create Community</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="composer-accent">
+
+    <!-- Live preview -->
+    <div class="tips-card" id="previewCard">
+      <div class="tips-header">
+        <i class="fa-solid fa-eye"></i>
+        Live Preview
+      </div>
+      <div class="stage-preview-box">
+        <div class="preview-cover" id="previewCover">
+          <span class="preview-cover-placeholder"><i class="fa-solid fa-layer-group"></i></span>
+        </div>
+        <div class="preview-info">
+          <div class="preview-name" id="previewName">s/community_name</div>
+          <div class="preview-title" id="previewTitle">Your community title</div>
+          <div class="preview-meta">
+            <i class="fa-solid fa-user-group"></i> 1 member &nbsp;·&nbsp;
+            <i class="fa-solid fa-star"></i> New
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="tips-card">
+      <div class="tips-header">
+        <i class="fa-solid fa-lightbulb"></i>
+        Community Tips
+      </div>
+      <ul class="tips-list">
+        <li>Pick a name you'll be happy with — it can't be changed</li>
+        <li>Write a description so people know what belongs here</li>
+        <li>A cover image makes your community stand out</li>
+        <li>You become the admin and can invite moderators</li>
+        <li>Be specific: niches thrive on focused stages</li>
+      </ul>
+    </div>
+
+    <!-- Rules reminder -->
+    <div class="rules-card">
+      <div class="rules-card-title">
+        <i class="fa-solid fa-scroll"></i>
+        Before you create
+      </div>
+      <p>Make sure your community doesn't duplicate an existing one. stages that violate site rules will be removed.</p>
+      <a href="{% url 'rules' %}">Read the site rules →</a>
+    </div>
+
+  </aside>
+</div>
+
+<script>
+(function () {
+  /* ── Name input ───────────────────────────── */
+  const nameInput   = document.getElementById('nameInput');
+  const nameCount   = document.getElementById('nameCount');
+  const previewName = document.getElementById('previewName');
+
+  function sanitizeName(val) {
+    return val.toLowerCase().replace(/\s/g, '_').replace(/[^a-z0-9_]/g, '');
+  }
+
+  if (nameInput) {
+    // Initialise on load
+    if (nameInput.value) {
+      nameCount.textContent = nameInput.value.length;
+      previewName.textContent = 's/' + (nameInput.value || 'community_name');
+    }
+
+    nameInput.addEventListener('input', function () {
+      const clean = sanitizeName(this.value);
+      if (clean !== this.value) {
+        const pos = this.selectionStart;
+        this.value = clean;
+        this.setSelectionRange(pos, pos);
+      }
+      nameCount.textContent = clean.length;
+      previewName.textContent = 's/' + (clean || 'community_name');
+
+      // Counter colour feedback
+      if (clean.length >= 18) {
+        nameCount.style.color = '#dc2626';
+      } else if (clean.length >= 15) {
+        nameCount.style.color = '#f59e0b';
+      } else {
+        nameCount.style.color = 'var(--vz-accent)';
+      }
+    });
+  }
+
+  /* ── Title input ──────────────────────────── */
+  const titleInput  = document.getElementById('titleInput');
+  const charCount   = document.getElementById('charCount');
+  const underline   = document.querySelector('.title-underline');
+  const previewTitle = document.getElementById('previewTitle');
+
+  if (titleInput) {
+    if (titleInput.value) {
+      charCount.textContent = titleInput.value.length;
+      previewTitle.textContent = titleInput.value;
+      underline.style.transform = 'scaleX(' + Math.min(titleInput.value.length / 200, 1) + ')';
+    }
+
+    titleInput.addEventListener('input', function () {
+      const len = this.value.length;
+      charCount.textContent = len;
+      underline.style.transform = 'scaleX(' + Math.min(len / 200, 1) + ')';
+      previewTitle.textContent = this.value || 'Your community title';
+
+      if (len > 170) charCount.style.color = '#dc2626';
+      else if (len > 130) charCount.style.color = '#f59e0b';
+      else charCount.style.color = 'var(--vz-accent)';
+    });
+  }
+
+  /* ── Description counter ──────────────────── */
+  const descInput = document.getElementById('descriptionInput');
+  const descCount = document.getElementById('descCount');
+
+  if (descInput) {
+    if (descInput.value) descCount.textContent = descInput.value.length;
+    descInput.addEventListener('input', function () {
+      descCount.textContent = this.value.length;
+    });
+
+    // Auto-grow height
+    descInput.addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.height = this.scrollHeight + 'px';
+    });
+  }
+
+  /* ── Cover image upload ───────────────────── */
+  const coverInput   = document.getElementById('coverInput');
+  const coverZone    = document.getElementById('coverZone');
+  const coverPreview = document.getElementById('coverPreview');
+  const coverEmpty   = document.getElementById('coverEmpty');
+  const coverRemove  = document.getElementById('coverRemove');
+  const previewCover = document.getElementById('previewCover');
+
+  function showCover(src) {
+    coverPreview.src = src;
+    coverPreview.style.display = 'block';
+    coverEmpty.style.display   = 'none';
+    coverRemove.style.display  = 'flex';
+    coverZone.classList.add('has-media');
+
+    previewCover.style.backgroundImage = 'url(' + src + ')';
+    previewCover.classList.add('has-image');
+  }
+
+  function clearCover() {
+    coverPreview.src = '';
+    coverPreview.style.display = 'none';
+    coverEmpty.style.display   = '';
+    coverRemove.style.display  = 'none';
+    coverZone.classList.remove('has-media');
+    coverInput.value = '';
+
+    previewCover.style.backgroundImage = '';
+    previewCover.classList.remove('has-image');
+  }
+
+  if (coverInput) {
+    coverInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image too large. Please choose an image under 5 MB.');
+        this.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => showCover(e.target.result);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (coverZone) {
+    coverZone.addEventListener('click', function (e) {
+      if (e.target === coverRemove || coverRemove.contains(e.target)) return;
+      if (!coverZone.classList.contains('has-media')) coverInput.click();
+    });
+
+    coverZone.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      this.classList.add('drag-over');
+    });
+    coverZone.addEventListener('dragleave', function () {
+      this.classList.remove('drag-over');
+    });
+    coverZone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image too large. Please choose an image under 5 MB.');
+        return;
+      }
+      // Assign to input
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      coverInput.files = dt.files;
+      const reader = new FileReader();
+      reader.onload = ev => showCover(ev.target.result);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (coverRemove) {
+    coverRemove.addEventListener('click', function (e) {
+      e.stopPropagation();
+      clearCover();
+    });
+  }
+
+  /* ── Submit loading state ─────────────────── */
+  const form      = document.getElementById('createCommunityForm');
+  const submitBtn = document.getElementById('submitBtn');
+
+  if (form) {
+    form.addEventListener('submit', function () {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating…';
+    });
+  }
+})();
+</script>
+{% endblock content %}

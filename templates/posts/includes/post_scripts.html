@@ -1,0 +1,688 @@
+<script>
+/* Edit comment inline */
+function editComment(commentId, postId) {
+  toggleCommentMenu(commentId);
+  var textEl = document.querySelector('#comment-' + commentId + ' .c-text');
+  var oldHTML = textEl.innerHTML;
+  var oldText = textEl.innerText.trim();
+  textEl.setAttribute('contenteditable', 'true');
+  textEl.classList.add('c-text--editing');
+  textEl.focus();
+
+  var bar = document.createElement('div');
+  bar.className = 'c-edit-bar';
+  bar.innerHTML = '<button class="btn btn-primary btn-sm" onclick="saveComment(' + commentId + ', ' + postId + ', this)"><i class="fa-solid fa-check"></i> Save</button> ' +
+    '<button class="btn btn-sm btn-ghost" onclick="cancelEditComment(' + commentId + ')"><i class="fa-solid fa-xmark"></i></button>';
+  textEl.parentNode.insertBefore(bar, textEl.nextSibling);
+
+  textEl.dataset.oldHtml = oldHTML;
+}
+
+function cancelEditComment(commentId) {
+  var textEl = document.querySelector('#comment-' + commentId + ' .c-text');
+  textEl.innerHTML = textEl.dataset.oldHtml;
+  textEl.removeAttribute('contenteditable');
+  textEl.classList.remove('c-text--editing');
+  var bar = textEl.parentNode.querySelector('.c-edit-bar');
+  if (bar) bar.remove();
+}
+
+function saveComment(commentId, postId, btn) {
+  var textEl = document.querySelector('#comment-' + commentId + ' .c-text');
+  var newBody = textEl.innerHTML;
+  btn.disabled = true;
+  fetch('/posts/' + postId + '/comments/' + commentId + '/edit/', {
+    method: 'POST',
+    headers: {'X-CSRFToken': window.CSRF_TOKEN, 'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'body=' + encodeURIComponent(newBody)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.error) {
+      showToast(data.error, 'error');
+      btn.disabled = false;
+      return;
+    }
+    textEl.removeAttribute('contenteditable');
+    textEl.classList.remove('c-text--editing');
+    var bar = textEl.parentNode.querySelector('.c-edit-bar');
+    if (bar) bar.remove();
+    showToast('Comment updated.', 'success');
+  })
+  .catch(function() { btn.disabled = false; showToast('Failed to update comment.', 'error'); });
+}
+
+/* Delete comment */
+function deleteComment(commentId, postId) {
+  if (!confirm('Delete this comment? This cannot be undone.')) return;
+  fetch('/posts/' + postId + '/comments/' + commentId + '/delete/', {
+    method: 'POST',
+    headers: {'X-CSRFToken': window.CSRF_TOKEN}
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.error) {
+      showToast(data.error, 'error');
+      return;
+    }
+    var el = document.getElementById('comment-' + commentId);
+    if (el) {
+      el.style.opacity = '0.3';
+      el.innerHTML = '<div class="c-inner"><div class="c-col"><div class="c-text" style="color:var(--text-muted);font-style:italic">[deleted]</div></div></div>';
+    }
+    showToast('Comment deleted.', 'success');
+  })
+  .catch(function() { showToast('Failed to delete comment.', 'error'); });
+}
+
+/* ---- Report Modal System ---- */
+var _reportState = { type: null, id: null };
+
+function openReportModal(contentType, contentId, label) {
+  _reportState.type = contentType;
+  _reportState.id = contentId;
+  var modal = document.getElementById('reportModal');
+  if (!modal) return;
+  document.getElementById('report-target-label').textContent = label || contentType;
+  // Reset form
+  modal.querySelectorAll('input[name=report_type]').forEach(function(r) { r.checked = false; });
+  document.getElementById('report-desc').value = '';
+  document.getElementById('report-char-count').textContent = '0';
+  document.getElementById('report-submit-btn').disabled = true;
+  document.getElementById('report-desc-wrap').classList.remove('show');
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReportModal() {
+  var modal = document.getElementById('reportModal');
+  if (!modal) return;
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+  _reportState = { type: null, id: null };
+}
+
+/* Enable submit when a reason is selected, show description area */
+document.addEventListener('DOMContentLoaded', function() {
+  var modal = document.getElementById('reportModal');
+  if (!modal) return;
+  modal.querySelectorAll('input[name=report_type]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      document.getElementById('report-submit-btn').disabled = false;
+      document.getElementById('report-desc-wrap').classList.add('show');
+    });
+  });
+  var descInput = document.getElementById('report-desc');
+  if (descInput) {
+    descInput.addEventListener('input', function() {
+      document.getElementById('report-char-count').textContent = this.value.length;
+    });
+  }
+  /* Close on Escape */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeReportModal();
+  });
+});
+
+function submitReport() {
+  var btn = document.getElementById('report-submit-btn');
+  var selected = document.querySelector('input[name=report_type]:checked');
+  if (!selected || !_reportState.type) return;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting…';
+  var bodyParts = 'content_type=' + _reportState.type
+    + '&report_type=' + encodeURIComponent(selected.value)
+    + '&description=' + encodeURIComponent(document.getElementById('report-desc').value);
+  if (_reportState.type === 'post') bodyParts += '&post_id=' + _reportState.id;
+  else bodyParts += '&comment_id=' + _reportState.id;
+
+  fetch("{% url 'posts:report' %}", {
+    method: 'POST',
+    headers: {'X-CSRFToken': window.CSRF_TOKEN, 'Content-Type': 'application/x-www-form-urlencoded'},
+    body: bodyParts
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    closeReportModal();
+    if (data.error) showToast(data.error, 'warning');
+    else showToast('Report submitted — thank you for helping keep Vaze safe.', 'success');
+  })
+  .catch(function() {
+    closeReportModal();
+    showToast('Something went wrong. Please try again.', 'error');
+  });
+}
+
+function reportComment(id) {
+  openReportModal('comment', id, 'this comment');
+}
+
+/* Share — copy link with HTTP fallback */
+function copyPostLink(btn) {
+  var url = window.location.href;
+  var finish = function() {
+    var dd = document.getElementById('overflow-dropdown');
+    if (dd) dd.classList.remove('open');
+    if (typeof showToast === 'function') showToast('Link copied!', 'success');
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(url).then(finish);
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    finish();
+  }
+}
+
+/* Toggle bookmark */
+function toggleBookmark() {
+  fetch('{% url "posts:toggle_bookmark" post.id %}', {
+    method: 'POST',
+    headers: {'X-CSRFToken': window.CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest'}
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var btn = document.getElementById('bookmark-btn');
+    var icon = btn.querySelector('i');
+    var text = document.getElementById('bookmark-text');
+    if (data.bookmarked) {
+      icon.className = 'fa-solid fa-bookmark';
+      text.textContent = 'Saved';
+      showToast('Post saved!', 'success');
+    } else {
+      icon.className = 'fa-regular fa-bookmark';
+      text.textContent = 'Save';
+      showToast('Removed from saved.', 'success');
+    }
+  })
+  .catch(function() { showToast('Something went wrong.', 'error'); });
+}
+
+/* Report post */
+function reportPost() {
+  openReportModal('post', {{ post.id }}, 'this post');
+}
+
+/* Strip external formatting on paste — preserve only plain text */
+document.addEventListener('paste', function(e) {
+  if (!e.target.isContentEditable) return;
+  e.preventDefault();
+  var text = (e.clipboardData || window.clipboardData).getData('text/plain');
+  document.execCommand('insertText', false, text);
+});
+
+/* Normalize contenteditable HTML → clean <br>-separated text */
+function normalizeEditorHTML(editor) {
+  var clone = editor.cloneNode(true);
+  /* Replace every block element (div, p) with a leading <br> + its children.
+     The <br> represents the line-break the block element implies. */
+  var blocks = clone.querySelectorAll('div, p');
+  blocks.forEach(function(el) {
+    var br = document.createElement('br');
+    el.parentNode.insertBefore(br, el);          /* line-break FIRST */
+    while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el); /* then content */
+    el.parentNode.removeChild(el);
+  });
+  var html = clone.innerHTML;
+  /* strip leading / trailing <br> */
+  html = html.replace(/^(\s*<br\s*\/?> *)+/i, '').replace(/(\s*<br\s*\/?>\s*)+$/i, '');
+  /* collapse 3+ consecutive <br> down to 2 (= one blank line max) */
+  html = html.replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>');
+  return html.trim();
+}
+
+/* Post overflow menu */
+function togglePostMenu() {
+  var dd = document.getElementById('overflow-dropdown');
+  if (dd) dd.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('post-overflow-menu');
+  if (menu && !menu.contains(e.target)) {
+    var dd = document.getElementById('overflow-dropdown');
+    if (dd) dd.classList.remove('open');
+  }
+});
+
+/* Insert link helper */
+function insertLink() {
+  var url = prompt('Enter URL:', 'https://');
+  if (!url) return;
+  // Ensure a safe scheme
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  var editor = document.getElementById('compose');
+  editor.focus();
+  var sel = window.getSelection();
+  var selectedText = (sel && sel.toString().trim()) || url;
+  document.execCommand('insertHTML', false,
+    '<a href="' + url.replace(/"/g, '%22') + '" rel="noopener">' + selectedText + '</a>');
+}
+
+/* Init */
+document.addEventListener('DOMContentLoaded', function() {
+
+  /* Clamp long comments — add "Read more" toggle */
+  var LINE_LIMIT = 8;
+  document.querySelectorAll('.c-text').forEach(function(el) {
+    // Measure text height only — hide images/media temporarily
+    var imgs = el.querySelectorAll('img');
+    imgs.forEach(function(i) { i.style.display = 'none'; });
+    var lineH = parseFloat(getComputedStyle(el).lineHeight) || 22;
+    var textOverflows = el.scrollHeight > lineH * (LINE_LIMIT + 1);
+    imgs.forEach(function(i) { i.style.display = ''; });
+    if (textOverflows) {
+      el.classList.add('c-text--clamped');
+      var btn = document.createElement('button');
+      btn.className = 'c-read-more';
+      btn.textContent = 'Read more';
+      btn.onclick = function() {
+        var expanded = el.classList.toggle('c-text--expanded');
+        btn.textContent = expanded ? 'Show less' : 'Read more';
+      };
+      el.parentNode.insertBefore(btn, el.nextSibling);
+    }
+  });
+
+  /* Comment sorting — re-sort both .comment-item-wrap AND unhidden */
+  var tabs = document.querySelectorAll('.sort-tab');
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      tabs.forEach(function(t) { t.classList.remove('active'); });
+      this.classList.add('active');
+      var list = document.getElementById('comments-list');
+      if (!list) return;
+      var items = Array.from(list.querySelectorAll('.comment-item-wrap'));
+      if (this.dataset.sort === 'top') {
+        items.sort(function(a, b) {
+          var ac = a.querySelector(':scope > .comment');
+          var bc = b.querySelector(':scope > .comment');
+          var al = parseInt((ac && ac.querySelector(':scope > .comment-inner > .c-col .c-like-ct') || {}).textContent) || 0;
+          var bl = parseInt((bc && bc.querySelector(':scope > .comment-inner > .c-col .c-like-ct') || {}).textContent) || 0;
+          return bl - al;
+        });
+      } else {
+        items.sort(function(a, b) {
+          var at = parseInt((a.querySelector(':scope > .comment') || {}).dataset.ts) || 0;
+          var bt = parseInt((b.querySelector(':scope > .comment') || {}).dataset.ts) || 0;
+          return bt - at;
+        });
+      }
+      /* re-apply load-more visibility */
+      items.forEach(function(item, idx) {
+        list.appendChild(item);
+        var loadMoreDone = !document.querySelector('.comment-hidden');
+        if (!loadMoreDone) {
+          item.classList.toggle('comment-hidden', idx >= 5);
+        }
+      });
+    });
+  });
+});
+
+/* Load more comments */
+function loadMoreComments() {
+  var hidden = document.querySelectorAll('.comment-hidden');
+  hidden.forEach(function(el) { el.classList.remove('comment-hidden'); });
+  var wrap = document.getElementById('load-more-wrap');
+  if (wrap) wrap.style.display = 'none';
+}
+
+/* Thread collapse / expand — toggling .comment--collapsed drives all CSS transitions */
+/* Stub click — always expands */
+function expandThread(id) {
+  var el = document.getElementById('comment-' + id);
+  if (!el) return;
+  el.classList.remove('comment--collapsed', 'comment--folded');
+  var gutter = el.querySelector(':scope > .comment-inner > .c-gutter');
+  if (gutter) gutter.setAttribute('aria-expanded', 'true');
+}
+
+/* Rail click — cycles: expanded → collapsed → folded → expanded */
+function toggleThread(id) {
+  var el = document.getElementById('comment-' + id);
+  if (!el) return;
+  var gutter = el.querySelector(':scope > .comment-inner > .c-gutter');
+  var stub = document.getElementById('thread-stub-' + id);
+  var total = stub ? parseInt(stub.dataset.total, 10) : 0;
+  var replyCount = el.querySelector(':scope > .c-thread')
+    ? el.querySelector(':scope > .c-thread').querySelectorAll(':scope > .comment').length
+    : 0;
+
+  if (el.classList.contains('comment--folded')) {
+    // Folded → Expanded
+    el.classList.remove('comment--folded', 'comment--collapsed');
+    if (gutter) gutter.setAttribute('aria-expanded', 'true');
+  } else if (el.classList.contains('comment--collapsed')) {
+    // Collapsed (peek) → Folded (hide all)
+    el.classList.remove('comment--collapsed');
+    el.classList.add('comment--folded');
+    if (stub) {
+      var label = stub.querySelector('.c-stub-label');
+      if (label) label.textContent = total === 1 ? '1 reply' : total + ' replies';
+    }
+    if (gutter) gutter.setAttribute('aria-expanded', 'false');
+  } else {
+    // Expanded → Collapsed (peek) if 2+ replies, else straight to Folded
+    if (replyCount > 1) {
+      el.classList.add('comment--collapsed');
+      if (stub) {
+        var remaining = total - 1;
+        var label = stub.querySelector('.c-stub-label');
+        if (label) label.textContent = remaining === 1 ? '1 more reply' : remaining + ' more replies';
+      }
+      if (gutter) gutter.setAttribute('aria-expanded', 'false');
+    } else {
+      el.classList.add('comment--folded');
+      if (stub) {
+        var label = stub.querySelector('.c-stub-label');
+        if (label) label.textContent = total === 1 ? '1 reply' : total + ' replies';
+      }
+      if (gutter) gutter.setAttribute('aria-expanded', 'false');
+    }
+  }
+}
+
+/* Per-thread load-more via AJAX */
+function loadMoreReplies(btn) {
+  var commentId = btn.dataset.commentId;
+  var page      = parseInt(btn.dataset.page, 10);
+  var depth     = parseInt(btn.dataset.depth, 10);
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+  fetch('/posts/comments/' + commentId + '/replies/?page=' + page + '&depth=' + depth, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    btn.insertAdjacentHTML('beforebegin', data.html);
+    if (data.has_more) {
+      var label = data.remaining === 1 ? '1 more reply' : data.remaining + ' more replies';
+      btn.innerHTML = '<i class="fa-solid fa-angles-down"></i> ' + label;
+      btn.dataset.page = data.next_page;
+      btn.disabled = false;
+    } else {
+      btn.remove();
+    }
+  })
+  .catch(function() {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Failed — tap to retry';
+  });
+}
+
+/* ── Reply form: rich text helpers ── */
+function formatReply(commentId, command) {
+  document.getElementById('reply-editor-' + commentId).focus();
+  document.execCommand(command, false, null);
+}
+
+function insertReplyLink(commentId) {
+  var url = prompt('Enter URL:', 'https://');
+  if (!url) return;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  var editor = document.getElementById('reply-editor-' + commentId);
+  editor.focus();
+  var sel = window.getSelection();
+  var selectedText = (sel && sel.toString().trim()) || url;
+  document.execCommand('insertHTML', false,
+    '<a href="' + url.replace(/"/g, '%22') + '" rel="noopener">' + selectedText + '</a>');
+}
+
+function syncReplyEditor(form, commentId) {
+  var editor = document.getElementById('reply-editor-' + commentId);
+  var html = normalizeEditorHTML(editor);
+  if (!html) {
+    editor.focus();
+    editor.classList.add('compose-editor--error');
+    setTimeout(function() { editor.classList.remove('compose-editor--error'); }, 2000);
+    return false;
+  }
+  var gifImg = document.querySelector('#attach-preview-' + commentId + ' img[data-gif-url]');
+  if (gifImg) {
+    html += '<img src="' + gifImg.dataset.gifUrl + '" alt="GIF" style="max-width:100%;border-radius:6px;display:block;margin-top:8px;" />';
+  }
+  document.getElementById('reply-body-' + commentId).value = html;
+  return true;
+}
+
+/* ── Comment image modal ── */
+function openImgModal(src) {
+  var m = document.getElementById('c-img-modal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'c-img-modal';
+    m.className = 'c-img-modal';
+    m.innerHTML = '<img id="c-img-modal-img" /><button class="c-img-modal-close" onclick="closeImgModal()"><i class="fa-solid fa-xmark"></i></button>';
+    m.addEventListener('click', function(e) { if (e.target === m) closeImgModal(); });
+    document.body.appendChild(m);
+  }
+  document.getElementById('c-img-modal-img').src = src;
+  m.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeImgModal() {
+  var m = document.getElementById('c-img-modal');
+  if (m) m.style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closeImgModal(); closeGifPicker(); zoomOut(null); } });
+
+/* ── Image preview (main compose) ── */
+function previewMainImg(input) {
+  var box = document.getElementById('compose-img-preview');
+  box.innerHTML = '';
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  if (file.size > 5 * 1024 * 1024) {
+    box.innerHTML = '<span class="c-attach-err"><i class="fa-solid fa-triangle-exclamation"></i> File too large (max 5 MB)</span>';
+    input.value = '';
+    return;
+  }
+  var url = URL.createObjectURL(file);
+  box.innerHTML = '<div class="c-preview-wrap"><img src="' + url + '" class="c-preview-img" /><button type="button" class="c-preview-rm" onclick="removeMainImg(this)" title="Remove"><i class="fa-solid fa-xmark"></i></button></div>';
+}
+function removeMainImg(btn) {
+  document.getElementById('compose-img-input').value = '';
+  document.getElementById('compose-img-preview').innerHTML = '';
+}
+
+/* ── Image preview (reply forms) ── */
+function previewReplyImg(input, commentId) {
+  var box = document.getElementById('attach-preview-' + commentId);
+  box.innerHTML = '';
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  if (file.size > 5 * 1024 * 1024) {
+    box.innerHTML = '<span class="c-attach-err"><i class="fa-solid fa-triangle-exclamation"></i> Max 5 MB</span>';
+    input.value = '';
+    return;
+  }
+  var url = URL.createObjectURL(file);
+  box.innerHTML = '<div class="c-preview-wrap"><img src="' + url + '" class="c-preview-img" /><button type="button" class="c-preview-rm" onclick="this.closest(\'.c-preview-wrap\').remove(); document.querySelector(\'#reply-form-' + commentId + ' input[type=file]\').value=\'\'" title="Remove"><i class="fa-solid fa-xmark"></i></button></div>';
+}
+
+/* ── GIF Picker (Tenor v1) ── */
+var _gifTarget = null; // 'main' or a comment id
+var _gifNext = '';     // Tenor pagination cursor
+var _gifLastQuery = '';
+
+function openGifPicker(target) {
+  _gifTarget = target;
+  var modal = document.getElementById('gif-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.getElementById('gif-search-input').focus();
+  document.getElementById('gif-search-input').value = '';
+  document.getElementById('gif-results').innerHTML = '';
+  document.getElementById('gif-load-more').style.display = 'none';
+  _gifNext = '';
+  _gifLastQuery = 'trending';
+  searchGifs('trending', true);
+}
+
+function closeGifPicker() {
+  var modal = document.getElementById('gif-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function searchGifs(query, replace) {
+  _gifLastQuery = query;
+  /* Tenor v1 demo key — works without a Google Cloud account */
+  var key = 'LIVDSRZULELA';
+  var pos = replace ? '' : (_gifNext ? '&pos=' + encodeURIComponent(_gifNext) : '');
+  var endpoint = query === 'trending'
+    ? 'https://api.tenor.com/v1/featured?key=' + key + '&limit=20&media_filter=minimal' + pos
+    : 'https://api.tenor.com/v1/search?key=' + key + '&q=' + encodeURIComponent(query) + '&limit=20&media_filter=minimal' + pos;
+
+  fetch(endpoint)
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var box = document.getElementById('gif-results');
+    if (replace) box.innerHTML = '';
+    _gifNext = data.next || '';
+    (data.results || []).forEach(function(item) {
+      var media = item.media && item.media[0];
+      var url  = media && media.gif  && media.gif.url;
+      var tiny = media && media.tinygif && media.tinygif.url;
+      if (!url) return;
+      var img = document.createElement('img');
+      img.src = tiny || url;
+      img.className = 'gif-thumb';
+      img.loading = 'lazy';
+      img.alt = item.title || 'GIF';
+      img.onclick = function() { insertGif(url); };
+      box.appendChild(img);
+    });
+    document.getElementById('gif-load-more').style.display = _gifNext ? 'inline-flex' : 'none';
+  })
+  .catch(function() {
+    if (replace) document.getElementById('gif-results').innerHTML =
+      '<p style="color:var(--vz-text-muted);padding:20px;text-align:center;grid-column:1/-1">Could not load GIFs. Check your connection.</p>';
+  });
+}
+
+function _insertGifIntoEditor(editorEl, url) {
+  editorEl.focus();
+  var range = document.createRange();
+  range.selectNodeContents(editorEl);
+  range.collapse(false);
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  document.execCommand('insertHTML', false,
+    '<img src="' + url + '" alt="GIF" style="max-width:100%;border-radius:6px;display:block;margin-top:4px;" />');
+}
+
+function insertGif(url) {
+  var safeUrl = url.replace(/"/g, '%22');
+  var previewHtml = '<div class="c-preview-wrap"><img src="' + safeUrl + '" class="c-preview-img" data-gif-url="' + safeUrl + '" alt="GIF" /><button type="button" class="c-preview-rm" onclick="this.closest(\'.c-preview-wrap\').remove()" title="Remove"><i class="fa-solid fa-xmark"></i></button></div>';
+  if (_gifTarget === 'main') {
+    document.getElementById('compose-img-preview').innerHTML = previewHtml;
+  } else {
+    var box = document.getElementById('attach-preview-' + _gifTarget);
+    if (box) box.innerHTML = previewHtml;
+  }
+  closeGifPicker();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  /* Sync contenteditable → hidden textarea on submit */
+  var ncForm = document.querySelector('#new-comment form');
+  if (ncForm) {
+    ncForm.addEventListener('submit', function(e) {
+      var editor = document.getElementById('compose');
+      // Normalize browser-specific block elements to <br>
+      var html = normalizeEditorHTML(editor);
+      if (!html) {
+        e.preventDefault();
+        editor.focus();
+        editor.classList.add('compose-editor--error');
+        setTimeout(function() { editor.classList.remove('compose-editor--error'); }, 2000);
+        return;
+      }
+      var gifImg = document.querySelector('#compose-img-preview img[data-gif-url]');
+      if (gifImg) {
+        html += '<img src="' + gifImg.dataset.gifUrl + '" alt="GIF" style="max-width:100%;border-radius:6px;display:block;margin-top:8px;" />';
+      }
+      document.getElementById('compose-body').value = html;
+    });
+  }
+
+  /* Scroll to + highlight newly posted comment */
+  var params = new URLSearchParams(window.location.search);
+  var highlightId = params.get('comment_highlight');
+  if (highlightId) {
+    var target = document.getElementById('comment-' + highlightId);
+    if (target) {
+      /* Unhide if behind load-more */
+      var wrap = target.closest('.comment-item-wrap');
+      if (wrap) wrap.classList.remove('comment-hidden');
+      /* Expand any collapsed parent threads */
+      var thread = target.closest('.c-thread');
+      while (thread) {
+        var parentComment = thread.parentElement;
+        if (parentComment && (parentComment.classList.contains('comment--collapsed') || parentComment.classList.contains('comment--folded'))) {
+          parentComment.classList.remove('comment--collapsed', 'comment--folded');
+          var gutter = parentComment.querySelector(':scope > .comment-inner > .c-gutter');
+          if (gutter) gutter.setAttribute('aria-expanded', 'true');
+        }
+        thread = parentComment && parentComment.closest('.c-thread');
+      }
+      setTimeout(function() {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.classList.add('comment--highlight');
+        setTimeout(function() { target.classList.remove('comment--highlight'); }, 2800);
+      }, 120);
+    }
+  }
+
+  var gifInput = document.getElementById('gif-search-input');
+  if (gifInput) {
+    var debounce;
+    gifInput.addEventListener('input', function() {
+      clearTimeout(debounce);
+      var q = this.value.trim();
+      debounce = setTimeout(function() {
+        _gifNext = '';
+        searchGifs(q || 'trending', true);
+      }, 350);
+    });
+  }
+  var gifModal = document.getElementById('gif-modal');
+  if (gifModal) {
+    gifModal.addEventListener('click', function(e) {
+      if (e.target === gifModal) closeGifPicker();
+    });
+  }
+
+  /* Compose character counter */
+  (function() {
+    var CHAR_LIMIT = 1000;
+    var WARN_AT = 900;
+    var editor = document.getElementById('compose');
+    var counter = document.getElementById('compose-char-count');
+    if (!editor || !counter) return;
+    function updateCount() {
+      var len = (editor.textContent || '').length;
+      if (len === 0) {
+        counter.textContent = '';
+        counter.className = 'compose-char-count';
+        return;
+      }
+      counter.textContent = len + ' / ' + CHAR_LIMIT;
+      counter.className = 'compose-char-count' +
+        (len > CHAR_LIMIT ? ' compose-char-count--over' :
+         len >= WARN_AT   ? ' compose-char-count--warn' : '');
+    }
+    editor.addEventListener('input', updateCount);
+  })();
+
+});
+</script>

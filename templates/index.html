@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+{% load filter %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+{% endblock link %}
+
+{% block title %}WhatsNaija — Modern Nigerian Conversations{% endblock title %}
+
+{% block content %}
+
+{% if not request.user.is_authenticated %}
+<section class="guest-banner" id="guestBanner">
+  <div class="guest-banner-bg">
+    <div class="guest-banner-glow glow-1"></div>
+    <div class="guest-banner-glow glow-2"></div>
+  </div>
+  <button class="guest-banner-close" onclick="dismissBanner()" aria-label="Dismiss">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+  <div class="guest-banner-inner">
+    <div class="guest-banner-content">
+      <div class="guest-banner-badge">🇳🇬 Built for Nigerians</div>
+      <h1 class="guest-banner-title">Dive into anything<span class="guest-banner-dot">.</span></h1>
+      <p class="guest-banner-desc">Share links, spark discussions, and build stages around topics that matter to you.</p>
+      <div class="guest-banner-proof">
+        <span class="guest-banner-proof-item"><i class="fa-solid fa-users"></i> Growing community</span>
+        <span class="guest-banner-proof-sep">·</span>
+        <span class="guest-banner-proof-item"><i class="fa-solid fa-comments"></i> {{ stage_count|default:0 }} stages</span>
+        <span class="guest-banner-proof-sep">·</span>
+        <span class="guest-banner-proof-item"><i class="fa-solid fa-bolt"></i> New posts daily</span>
+      </div>
+      <div class="guest-banner-actions">
+        <a href="{% url 'users:register' %}" class="guest-banner-cta">Sign Up <i class="fa-solid fa-arrow-right"></i></a>
+        <a href="{% url 'users:login' %}" class="guest-banner-login">Already have an account? <strong>Log In</strong></a>
+      </div>
+    </div>
+    <div class="guest-banner-chips">
+      <a href="/s/nws"      class="guest-chip chip-1">s/nws</a>
+      <a href="/s/pol"      class="guest-chip chip-2">s/pol</a>
+      <a href="/s/eco"      class="guest-chip chip-3">s/eco</a>
+      <a href="/s/tec"      class="guest-chip chip-4">s/tec</a>
+      <a href="/s/ent"      class="guest-chip chip-5">s/ent</a>
+      <a href="/s/spo"      class="guest-chip chip-6">s/spo</a>
+      <a href="/s/romance"  class="guest-chip chip-7">s/romance</a>
+      <a href="/s/hausamen" class="guest-chip chip-8">s/hausamen</a>
+    </div>
+  </div>
+  <div class="guest-banner-wave">
+    <svg viewBox="0 0 1440 48" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <path d="M0 48h1440V20c-120-8-240 6-360 12S840 44 720 40 480 20 360 16 120 24 0 32z" fill="currentColor"/>
+    </svg>
+  </div>
+</section>
+<script>
+(function(){
+  if(document.cookie.indexOf('vaze_banner_dismissed=1')!==-1){
+    document.getElementById('guestBanner').style.display='none';
+  }
+})();
+function dismissBanner(){
+  document.getElementById('guestBanner').style.display='none';
+  document.cookie='vaze_banner_dismissed=1;path=/;max-age='+60*60*24*30+';SameSite=Lax';
+}
+</script>
+{% endif %}
+
+<div class="page-wrapper" id="discussions">
+  <div class="content-wrap">
+
+    <!-- Left Column -->
+    <aside class="left-col" id="leftCol">
+      <button class="drawer-close-btn" id="drawerCloseBtn" aria-label="Close stages">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      {% if stages %}
+      <div class="side-box">
+        <div class="side-box-title"><i class="fa-solid fa-layer-group"></i> stages</div>
+        <div class="side-box-body" style="padding: 6px;">
+          <ul class="other-stages-list">
+            {% for stage in stages|slice:":8" %}
+            {% if not stage.members_count or stage.members_count >= 10 %}
+            <li>
+              <a href="/s/{{ stage.name }}">
+                <span class="stage-mini-avatar" style="background:{{ stage.name|avatar_color }}">{{ stage.name|avatar_initials }}</span>
+                <span class="stage-mini-body">
+                  <span class="stage-mini-name">{% if stage.title %}{{ stage.title }}{% else %}{{ stage.name }}{% endif %}</span>
+                </span>
+                {% if stage.members_count %}<span class="stage-mini-count">{{ stage.members_count }}</span>{% endif %}
+              </a>
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+          <a href="{% url 'stages:stages' %}" class="stages-browse-link">Browse all</a>
+        </div>
+      </div>
+      {% endif %}
+    </aside>
+
+    <!-- Main Column -->
+    <div class="main-col">
+
+      {% if stages %}
+      <div class="mobile-stages" id="mobilestages">
+        <div class="mc-header"><span class="mc-title">stages</span></div>
+        <div class="mc-scroll">
+          {% for stage in stages|slice:":8" %}
+          <a href="/s/{{ stage.name }}" class="mc-chip">
+            <span class="mc-avatar" style="background:{{ stage.name|avatar_color }}">{{ stage.name|avatar_initials }}</span>
+            <span class="mc-name">{% if stage.title %}{{ stage.title }}{% else %}{{ stage.name }}{% endif %}</span>
+          </a>
+          {% endfor %}
+        </div>
+        <a href="{% url 'stages:stages' %}" class="mc-browse-all">Browse all stages →</a>
+      </div>
+      {% endif %}
+
+      <!-- =====================================================
+           SORT BAR  (hot / new / top)
+           ===================================================== -->
+      <nav class="sort-bar" aria-label="Sort posts">
+        <a href="{% url 'hot' %}" class="sort-tab{% if view_type == 'hot' %} active{% endif %}"{% if view_type == 'hot' %} aria-current="page"{% endif %}>
+          <i class="fa-solid fa-fire"></i> Hot
+        </a>
+        <a href="{% url 'new' %}" class="sort-tab{% if view_type == 'new' %} active{% endif %}"{% if view_type == 'new' %} aria-current="page"{% endif %}>
+          <i class="fa-solid fa-clock"></i> New
+        </a>
+        <a href="{% url 'top' %}" class="sort-tab{% if view_type == 'top' %} active{% endif %}"{% if view_type == 'top' %} aria-current="page"{% endif %}>
+          <i class="fa-solid fa-arrow-trend-up"></i> Top
+        </a>
+      </nav>
+
+      <!-- Top period sub-nav (Today / Week / Month / All) -->
+      {% if view_type == 'top' %}
+      <nav class="sort-bar sort-bar--sub" aria-label="Top period">
+        {% for p in top_periods %}
+        <a href="{% url 'top' %}?period={{ p }}"
+           class="sort-tab sort-tab--sm{% if p == top_period %} active{% endif %}"{% if p == top_period %} aria-current="page"{% endif %}>
+          {{ p|capfirst }}
+        </a>
+        {% endfor %}
+      </nav>
+      {% endif %}
+
+      <!-- Post Listing -->
+      <div class="post-list">
+        {% for post in posts %}
+        <article class="post-row{% if forloop.counter <= 3 and view_type == 'hot' %} top-post{% endif %}{% if forloop.first and view_type == 'hot' %} highlight{% endif %}">
+
+          {% if view_type == 'hot' %}<span class="post-rank post-rank-{{ forloop.counter }}">{{ forloop.counter }}.</span>{% endif %}
+
+          {% if post.image_count or post.og_image %}
+          <div class="post-thumb">
+            {% if post.image_count %}
+            <img src="{{ post.images.first.image.url }}" alt="{{ post.title }}" class="thumb-img" loading="lazy" />
+            {% else %}
+            <img src="{{ post.og_image }}" alt="{{ post.title }}" class="thumb-img" loading="lazy" />
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <div class="post-main">
+            <div class="post-title-line">
+              <a href="{% url 'posts:detail' post.slug %}" class="post-title">{{ post.title }}</a>
+              {% if post.url %}
+              <a href="{{ post.url }}" class="post-domain-link" target="_blank" rel="noopener noreferrer"
+                 title="{{ post.url }}" onclick="event.stopPropagation()">{{ post.url|get_domain_from_url }}</a>
+              {% endif %}
+            </div>
+            {% if post.body %}
+            <p class="post-snippet">{{ post.body|clean_excerpt:22 }}</p>
+            {% endif %}
+            <div class="post-meta">
+              <a href="/s/{{ post.stage.name }}" class="stage-tag" onclick="event.stopPropagation()">
+                {% if post.stage.title %}{{ post.stage.title }}{% else %}{{ post.stage.name }}{% endif %}
+              </a>
+              <span class="meta-sep">·</span>
+              <span class="meta-likes"><i class="fa-solid fa-arrow-up"></i> {{ post.like_count }}</span>
+              <span class="meta-sep">·</span>
+              <a href="{% url 'posts:detail' post.slug %}#comments" class="meta-comments" onclick="event.stopPropagation()">
+                <i class="fa-regular fa-comment"></i> {{ post.comment_count }}
+              </a>
+              <span class="meta-sep">·</span>
+              <span class="meta-byline">by
+                <a href="/{{ post.author.username }}" onclick="event.stopPropagation()">{{ post.author.username }}</a>
+                {% if post.author.is_staff %}<span class="meta-mod-chip">MOD</span>{% endif %}
+              </span>
+              <span class="meta-sep">·</span>
+              <span class="meta-time"><i class="fa-regular fa-clock"></i> {{ post.created_at|custom_timesince }}</span>
+            </div>
+          </div>
+          <a class="post-row-link" href="{% url 'posts:detail' post.slug %}" aria-hidden="true" tabindex="-1"></a>
+        </article>
+
+        {% if forloop.counter == 5 and not request.user.is_authenticated %}
+        <div class="feed-nudge">
+          <span>Enjoying the discussions?</span>
+          <a href="{% url 'users:register' %}">Join WhatsNaija <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+        {% endif %}
+
+        {% empty %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fa-solid fa-pen-fancy"></i></div>
+          <h3>No discussions yet</h3>
+          <p>Be the first to start a conversation on WhatsNaija.</p>
+          {% if request.user.is_authenticated %}
+          <a href="{% url 'posts:create' %}" class="btn-primary"><i class="fa-solid fa-plus"></i> Create Post</a>
+          {% else %}
+          <a href="{% url 'users:register' %}" class="btn-primary">Join WhatsNaija</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if posts.has_other_pages %}
+      <nav class="pager" aria-label="Pagination">
+        {% if posts.has_previous %}
+        <a href="?page={{ posts.previous_page_number }}{% if view_type == 'top' %}&period={{ top_period }}{% endif %}" class="pager-btn" aria-label="Previous page">
+          <i class="fa-solid fa-chevron-left"></i>
+        </a>
+        {% endif %}
+        {% for page_num in posts.paginator.page_range %}
+          {% if page_num == posts.number %}
+          <span class="pager-num pager-num--current">{{ page_num }}</span>
+          {% elif page_num == 1 or page_num == posts.paginator.num_pages or page_num >= posts.number|add:"-2" and page_num <= posts.number|add:"2" %}
+          <a href="?page={{ page_num }}{% if view_type == 'top' %}&period={{ top_period }}{% endif %}" class="pager-num">{{ page_num }}</a>
+          {% elif page_num == posts.number|add:"-3" or page_num == posts.number|add:"3" %}
+          <span class="pager-ellipsis">…</span>
+          {% endif %}
+        {% endfor %}
+        {% if posts.has_next %}
+        <a href="?page={{ posts.next_page_number }}{% if view_type == 'top' %}&period={{ top_period }}{% endif %}" class="pager-btn" aria-label="Next page">
+          <i class="fa-solid fa-chevron-right"></i>
+        </a>
+        {% endif %}
+      </nav>
+      {% endif %}
+
+    </div>
+
+    <!-- Sidebar -->
+    <div class="side-col">
+      {% if request.user.is_authenticated %}
+      <div class="side-box user-card">
+        <div class="user-card-stripe"></div>
+        <div class="user-card-head">
+          <div class="user-card-avatar">
+            {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" alt="{{ request.user.username }}" />
+            {% else %}
+            <div class="avatar-letter" style="background:{{ request.user.username|avatar_color }}">{{ request.user.username|first|upper }}</div>
+            {% endif %}
+          </div>
+          <div class="user-card-info">
+            <a href="/{{ request.user.username }}" class="user-card-name">{{ request.user.username }}</a>
+            <span class="user-card-label">{% if user.is_staff %}Moderator{% elif user.is_verified %}Verified{% else %}Member{% endif %}</span>
+          </div>
+        </div>
+        <div class="user-card-actions">
+          <a href="{% url 'posts:create' %}" class="user-action-primary"><i class="fa-solid fa-pen"></i> New Post</a>
+        </div>
+      </div>
+      {% else %}
+      <div class="side-box about-box">
+        <div class="side-box-head">
+          <div class="about-head-content">
+            <span class="side-brand">WhatsNaija</span>
+            <span class="side-tagline">Nigerian Discourse Platform</span>
+          </div>
+        </div>
+        <div class="side-box-body">
+          <p class="about-desc">A space for sharing links, sparking discussions, and building stages around topics that matter to Nigerians.</p>
+          <div class="platform-stats">
+            <div class="platform-stat"><strong>{{ total_posts|default:0|intcomma }}</strong><span>posts</span></div>
+            <div class="platform-stat"><strong>{{ total_users|default:0|intcomma }}</strong><span>members</span></div>
+            <div class="platform-stat"><strong>{{ stage_count|default:0 }}</strong><span>stages</span></div>
+          </div>
+          <a href="{% url 'users:register' %}" class="side-cta">Sign Up <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if trending_stages %}
+      <div class="side-box trending-box">
+        <div class="side-box-title"><i class="fa-solid fa-arrow-trend-up"></i> Trending Now</div>
+        <div class="side-box-body trending-body">
+          {% for stage in trending_stages %}
+          <a href="/s/{{ stage.name }}" class="trending-tag sidebar-row">
+            <span class="trending-rank">{{ forloop.counter }}</span>
+            <span class="trending-meta">
+              <span class="trending-name">{{ stage.title }}</span>
+              <span class="trending-sub">/s/{{ stage.name }}</span>
+            </span>
+            <span class="trending-badge">{{ stage.recent_post_count }} new</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if comments %}
+      <div class="side-box activity-box">
+        <div class="side-box-title"><i class="fa-solid fa-bolt"></i> Recent Activity</div>
+        <div class="side-box-body activity-body">
+          {% for comment in comments|slice:":5" %}
+          <div class="activity-item">
+            <a href="{% url 'posts:detail' comment.post.slug %}#comment{{ comment.id }}">
+              <div class="activity-head">
+                <span class="activity-stage">{{ comment.post.stage.name }}</span>
+                <span class="activity-time">{{ comment.created_at|custom_timesince }}</span>
+              </div>
+              <span class="activity-text">{% if comment.image or comment.gif_url %}{% if not comment.body %}[image]{% else %}{{ comment.body|clean_excerpt:12 }}{% endif %}{% else %}{{ comment.body|clean_excerpt:12 }}{% endif %}</span>
+            </a>
+            <span class="activity-meta">{% if comment.is_anon %}Anonymous{% else %}<strong>{{ comment.user.username }}</strong>{% endif %}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% include "includes/sidebar_footer.html" %}
+    </div>
+
+  </div>
+</div>
+<div class="left-col-overlay" id="leftColOverlay"></div>
+
+<script>
+(function() {
+  var col     = document.getElementById('leftCol');
+  var overlay = document.getElementById('leftColOverlay');
+  var closeBtn = document.getElementById('drawerCloseBtn');
+  function close() { col.classList.remove('open'); overlay.classList.remove('open'); }
+  if (col && overlay) {
+    overlay.addEventListener('click', close);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+  }
+})();
+</script>
+
+{% endblock content %}

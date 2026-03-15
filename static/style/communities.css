@@ -1,0 +1,271 @@
+/* ═══════════════════════════════════════════════
+   stages PAGE — /s/
+   ═══════════════════════════════════════════════ */
+
+/* ── Light-mode tokens (mirrors index.css :root) ── */
+
+
+.comm-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+}
+
+/* ── Header ── */
+.comm-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.comm-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--vz-text);
+  margin: 0 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comm-title i {
+  color: var(--vz-accent);
+}
+
+.comm-sub {
+  font-size: 13px;
+  color: var(--vz-text-muted);
+  margin: 0;
+}
+
+.comm-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--vz-accent);
+  color: #fff;
+  border-radius: var(--vz-radius, 10px);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.comm-create-btn:hover { opacity: 0.88; }
+
+/* ── Search ── */
+.comm-search-wrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.comm-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--vz-text-muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.comm-search {
+  width: 100%;
+  padding: 8px 44px 8px 36px;
+  border: 1.5px solid var(--vz-border);
+  border-radius: var(--vz-radius);
+  background: var(--vz-surface);
+  color: var(--vz-text);
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.comm-search:focus {
+  border-color: var(--vz-accent);
+}
+
+.comm-count {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--vz-text-muted);
+  background: var(--vz-bg);
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+/* ── Category sections ── */
+.comm-section {
+  margin-bottom: 16px;
+}
+
+.comm-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--vz-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comm-section-title i {
+  color: var(--vz-accent);
+  font-size: 13px;
+}
+
+/* ── List (compact rows) ── */
+.comm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius);
+  overflow: hidden;
+}
+
+.comm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--vz-surface);
+  border-bottom: 1px solid var(--vz-border);
+  transition: background 0.15s;
+  min-width: 0;
+}
+.comm-row:last-child { border-bottom: none; }
+.comm-row:hover { background: var(--vz-surface-hover); }
+
+.comm-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: -0.5px;
+}
+
+.comm-row-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--vz-text);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.comm-row-name:hover { color: var(--vz-accent); }
+
+.comm-row-slug {
+  font-size: 10.5px;
+  color: var(--vz-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 400;
+}
+
+.comm-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.comm-row-desc {
+  font-size: 11px;
+  color: var(--vz-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comm-row-stats {
+  font-size: 11px;
+  color: var(--vz-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* ── Join button ── */
+.comm-join-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  background: var(--vz-accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.comm-join-btn:hover { opacity: 0.85; }
+
+.comm-join-btn--joined {
+  background: transparent;
+  color: var(--vz-text-muted);
+  border: 1.5px solid var(--vz-border);
+}
+.comm-join-btn--joined:hover {
+  border-color: var(--vz-danger);
+  color: var(--vz-danger);
+  opacity: 1;
+}
+
+/* ── Empty / no results ── */
+.comm-empty,
+.comm-no-results {
+  color: var(--vz-text-muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 40px 0;
+  grid-column: 1 / -1;
+}
+
+/* ── Responsive ── */
+@media (min-width: 700px) {
+  .comm-sections-wrap {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .comm-col--left  { flex: 1; min-width: 0; }
+  .comm-col--right {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 500px) {
+  .comm-row-desc { display: none; }
+}

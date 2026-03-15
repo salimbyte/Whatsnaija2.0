@@ -1,0 +1,377 @@
+<script>
+(function() {
+  var btn = document.getElementById('mobileToggle');
+  var drawer = document.getElementById('mobileDrawer');
+  if (btn && drawer) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var open = drawer.classList.toggle('open');
+      btn.classList.toggle('active', open);
+      btn.setAttribute('aria-expanded', open);
+    });
+    /* Close drawer when tapping outside */
+    document.addEventListener('click', function(e) {
+      if (drawer.classList.contains('open') &&
+          !drawer.contains(e.target) && !btn.contains(e.target)) {
+        drawer.classList.remove('open');
+        btn.classList.remove('active');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+})();
+
+/* Toast notification system */
+(function() {
+  var container = document.createElement('div');
+  container.className = 'toast-container';
+  document.body.appendChild(container);
+
+  window.showToast = function(message, type) {
+    type = type || 'info';
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+
+    var content = document.createElement('div');
+    content.className = 'toast-content';
+
+    var icon = document.createElement('span');
+    icon.className = 'toast-icon';
+    var iconMap = {
+      info: 'fa-circle-info',
+      success: 'fa-check',
+      warning: 'fa-triangle-exclamation',
+      error: 'fa-circle-xmark'
+    };
+    icon.innerHTML = '<i class="fa-solid ' + (iconMap[type] || iconMap.info) + '"></i>';
+
+    var text = document.createElement('span');
+    text.className = 'toast-text';
+    text.textContent = message;
+
+    var close = document.createElement('button');
+    close.className = 'toast-close';
+    close.setAttribute('aria-label', 'Dismiss notification');
+    close.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+
+    content.appendChild(icon);
+    content.appendChild(text);
+    content.appendChild(close);
+    toast.appendChild(content);
+    container.appendChild(toast);
+    requestAnimationFrame(function() {
+      toast.classList.add('show');
+    });
+
+    var timer = setTimeout(function() {
+      toast.classList.remove('show');
+      setTimeout(function() { toast.remove(); }, 300);
+    }, 4000);
+
+    close.addEventListener('click', function(e) {
+      e.preventDefault();
+      clearTimeout(timer);
+      toast.classList.remove('show');
+      setTimeout(function() { toast.remove(); }, 300);
+    });
+  };
+})();
+
+{% if user.is_authenticated %}
+/* ── Real-time notifications ─────────────────────────────── */
+(function() {
+  var POLL_MS      = 8000;   // every 8 seconds
+  var seenMaxId    = null;   // highest notification ID we have shown
+  var initialized  = false;
+
+  /* ── Type metadata ──────────────────────────── */
+  var TYPE_META = {
+    like:    { icon: 'fa-thumbs-up',  cls: 'like',    label: 'New Like'     },
+    comment: { icon: 'fa-comment',    cls: 'comment', label: 'New Comment'  },
+    reply:   { icon: 'fa-reply',      cls: 'reply',   label: 'New Reply'    },
+    follow:  { icon: 'fa-user-plus',  cls: 'follow',  label: 'New Follower' },
+    message: { icon: 'fa-envelope',   cls: 'message', label: 'New Message'  },
+    mention: { icon: 'fa-at',         cls: 'mention', label: 'Mentioned'    },
+  };
+
+  /* ── Update navbar badge ────────────────────── */
+  function updateBadge(id, count) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (count > 0) {
+      el.textContent = count > 99 ? '99+' : count;
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
+  /* ── Show rich notification toast ──────────── */
+  function showNotifToast(n) {
+    var container = document.querySelector('.toast-container');
+    if (!container) return;
+
+    var meta = TYPE_META[n.type] || { icon: 'fa-bell', cls: 'default', label: 'Notification' };
+
+    var toast = document.createElement('a');
+    toast.className = 'vz-notif-toast';
+    toast.href = n.link || '{% url "users:notifications" %}';
+
+    /* Avatar */
+    var avatarDiv = document.createElement('div');
+    avatarDiv.className = 'vz-notif-toast-avatar';
+    if (n.avatar_url) {
+      var img = document.createElement('img');
+      img.src = n.avatar_url;
+      img.alt = n.sender;
+      avatarDiv.appendChild(img);
+    } else {
+      avatarDiv.textContent = n.sender_initial || '?';
+    }
+    /* Icon dot */
+    var dot = document.createElement('span');
+    dot.className = 'vz-notif-toast-icon-dot vz-notif-toast-icon-dot--' + meta.cls;
+    dot.innerHTML = '<i class="fa-solid ' + meta.icon + '"></i>';
+    avatarDiv.appendChild(dot);
+
+    /* Body */
+    var body = document.createElement('div');
+    body.className = 'vz-notif-toast-body';
+    body.innerHTML =
+      '<div class="vz-notif-toast-label">' + meta.label + '</div>' +
+      '<div class="vz-notif-toast-text">' + esc(n.text) + '</div>';
+
+    /* Close btn */
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'vz-notif-toast-close';
+    closeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    closeBtn.addEventListener('click', function(e) {
+      e.preventDefault(); e.stopPropagation();
+      dismissToast(toast);
+    });
+
+    /* Progress bar */
+    var progress = document.createElement('div');
+    progress.className = 'vz-notif-toast-progress';
+
+    toast.appendChild(avatarDiv);
+    toast.appendChild(body);
+    toast.appendChild(closeBtn);
+    toast.appendChild(progress);
+    container.appendChild(toast);
+
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+
+    var timer = setTimeout(function() { dismissToast(toast); }, 5000);
+    toast.addEventListener('mouseenter', function() { clearTimeout(timer); progress.style.animationPlayState = 'paused'; });
+    toast.addEventListener('mouseleave', function() { timer = setTimeout(function() { dismissToast(toast); }, 2000); progress.style.animationPlayState = 'running'; });
+  }
+
+  function dismissToast(toast) {
+    toast.classList.remove('show');
+    setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+  }
+
+  /* ── Safe HTML escape ───────────────────────── */
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  /* ── Browser (OS) notification ──────────────── */
+  var browserNotifGranted = false;
+  if (window.Notification) {
+    if (Notification.permission === 'granted') {
+      browserNotifGranted = true;
+    } else if (Notification.permission !== 'denied') {
+      /* Request on first user interaction */
+      document.addEventListener('click', function askOnce() {
+        Notification.requestPermission().then(function(p) {
+          browserNotifGranted = (p === 'granted');
+        });
+        document.removeEventListener('click', askOnce);
+      }, { once: true });
+    }
+  }
+
+  function fireBrowserNotif(n) {
+    if (!browserNotifGranted || !window.Notification) return;
+    try {
+      var meta = TYPE_META[n.type] || { label: 'Notification' };
+      var notif = new Notification(meta.label + ' — WhatsNaija', {
+        body: n.text,
+        icon: '/static/images/icon.png',
+        tag: 'vaze-notif-' + n.id,
+      });
+      notif.onclick = function() {
+        window.focus();
+        if (n.link) window.location.href = n.link;
+        notif.close();
+      };
+    } catch(e) {}
+  }
+
+  /* ── Live inject on notifications page ──────── */
+  function liveInjectNotif(n) {
+    var list = document.getElementById('notifList');
+    if (!list) return;
+    var meta = TYPE_META[n.type] || { icon: 'fa-bell', cls: 'default' };
+
+    var row = document.createElement('a');
+    row.href = n.link || '#';
+    row.className = 'notif-row notif-row--unread';
+    row.dataset.type = n.type;
+    row.innerHTML =
+      '<div class="notif-avatar-wrap">' +
+        '<div class="notif-avatar">' +
+          (n.avatar_url
+            ? '<img src="' + esc(n.avatar_url) + '" alt="' + esc(n.sender) + '"/>'
+            : esc(n.sender_initial || '?')) +
+        '</div>' +
+        '<span class="notif-type-dot notif-type-dot--' + meta.cls + '">' +
+          '<i class="fa-solid ' + meta.icon + '"></i>' +
+        '</span>' +
+      '</div>' +
+      '<div class="notif-row-body">' +
+        '<div class="notif-row-text">' + esc(n.text) + '</div>' +
+        '<div class="notif-row-time">just now</div>' +
+      '</div>' +
+      '<span class="notif-unread-dot"></span>';
+
+    /* Prepend at top of list */
+    list.insertBefore(row, list.firstChild);
+
+    /* Flash the row briefly */
+    row.style.transition = 'background 0.6s';
+    row.style.background = 'rgba(12,75,51,0.12)';
+    setTimeout(function() { row.style.background = ''; }, 600);
+  }
+
+  /* ── Main poll function ──────────────────────── */
+  function poll() {
+    fetch("{% url 'users:notifications_count' %}", { credentials: 'same-origin' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) {
+        if (!data) return;
+
+        updateBadge('notif-badge', data.count);
+        updateBadge('msg-badge', data.msg_count);
+        updateBadge('mbn-notif-badge', data.count);
+        updateBadge('mbn-msg-badge2', data.msg_count);
+
+        var latest = data.latest || [];
+
+        if (!initialized) {
+          /* First poll: just record the max ID, don't toast */
+          if (latest.length > 0) {
+            seenMaxId = latest[0].id;
+          } else {
+            seenMaxId = 0;
+          }
+          initialized = true;
+          return;
+        }
+
+        /* Subsequent polls: find genuinely new notifications */
+        var newOnes = latest.filter(function(n) { return n.id > seenMaxId; });
+        if (newOnes.length > 0) {
+          seenMaxId = latest[0].id;
+          /* Show in reverse so oldest new one appears first */
+          newOnes.reverse().forEach(function(n) {
+            showNotifToast(n);
+            fireBrowserNotif(n);
+            liveInjectNotif(n);
+          });
+        }
+      })
+      .catch(function() {});
+  }
+
+  poll();
+  setInterval(poll, POLL_MS);
+})();
+{% endif %}
+</script>
+
+<!-- Auto-hide topbar & bottom nav on mobile scroll -->
+<script>
+(function() {
+  var topbar = document.querySelector('.topbar');
+  var bottomNav = document.querySelector('.mobile-bottom-nav');
+  var body = document.body;
+  var lastY = window.scrollY;
+  var threshold = 10;
+  var ticking = false;
+
+  function onScroll() {
+    /* Pages can opt-out of auto-hide by setting data-no-scroll-hide on <body> */
+    if (body.dataset.noScrollHide) {
+      topbar.classList.remove('topbar--hidden');
+      if (bottomNav) bottomNav.classList.remove('mbn--hidden');
+      body.classList.remove('topbar-hidden');
+      return;
+    }
+    if (window.innerWidth > 768) {
+      topbar.classList.remove('topbar--hidden');
+      if (bottomNav) bottomNav.classList.remove('mbn--hidden');
+      body.classList.remove('topbar-hidden');
+      return;
+    }
+    var currentY = window.scrollY;
+    if (currentY <= 0) {
+      topbar.classList.remove('topbar--hidden');
+      if (bottomNav) bottomNav.classList.remove('mbn--hidden');
+      body.classList.remove('topbar-hidden');
+    } else if (currentY - lastY > threshold) {
+      topbar.classList.add('topbar--hidden');
+      if (bottomNav) bottomNav.classList.add('mbn--hidden');
+      body.classList.add('topbar-hidden');
+    } else if (lastY - currentY > threshold) {
+      topbar.classList.remove('topbar--hidden');
+      if (bottomNav) bottomNav.classList.remove('mbn--hidden');
+      body.classList.remove('topbar-hidden');
+    }
+    lastY = currentY;
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      requestAnimationFrame(onScroll);
+      ticking = true;
+    }
+  }, { passive: true });
+})();
+</script>
+
+<!-- iOS Safari bottom fill — prevents gap below bottom nav -->
+<div id="iosFill"></div>
+
+<script>
+/* Bottom nav breadcrumb: highlight last-visited tab on contextual pages */
+(function() {
+  var nav = document.getElementById('mobileBottomNav');
+  if (!nav) return;
+  var items = nav.querySelectorAll('a.mbn-item:not(.mbn-create)');
+  var hasActive = false;
+  items.forEach(function(item) {
+    if (item.classList.contains('active')) {
+      hasActive = true;
+      try { sessionStorage.setItem('mbn_last_tab', item.getAttribute('href')); } catch(e) {}
+    }
+  });
+  if (!hasActive) {
+    try {
+      var lastHref = sessionStorage.getItem('mbn_last_tab');
+      if (lastHref) {
+        items.forEach(function(item) {
+          if (item.getAttribute('href') === lastHref) {
+            item.classList.add('mbn-prev');
+          }
+        });
+      }
+    } catch(e) {}
+  }
+})();
+</script>

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+{% load filter %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/create.css' %}" />
+<style>
+.delete-warn-icon {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: #fef2f2; display: flex; align-items: center;
+  justify-content: center; margin: 0 auto 16px; color: #dc2626; font-size: 24px;
+}
+.delete-title { margin: 0 0 8px; font-size: 20px; color: var(--vz-text); }
+.delete-desc { color: var(--vz-text-muted); margin: 0 0 24px; max-width: 400px; margin-left: auto; margin-right: auto; }
+.delete-preview {
+  background: var(--vz-surface-hover); border-radius: 8px; padding: 16px;
+  margin: 0 auto 24px; max-width: 500px; text-align: left;
+}
+.delete-preview h3 { margin: 0 0 4px; font-size: 15px; color: var(--vz-text); }
+.delete-preview p { margin: 0; color: var(--vz-text-muted); font-size: 13px; }
+.delete-cancel-btn {
+  background: var(--vz-surface-hover); color: var(--vz-text-secondary);
+  text-decoration: none;
+}
+</style>
+{% endblock link %}
+
+{% block title %}Delete Post — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="composer">
+  <div class="composer-body">
+    <div class="composer-topbar">
+      <div class="composer-identity">
+        <div class="composer-avatar">
+          {% if user.profile.avatar %}
+          <img src="{{ user.profile.avatar.url }}" alt="" />
+          {% else %}
+          <span class="avatar-letter" style="background:{{ user.username|avatar_color }}">{{ user.username|first|upper }}</span>
+          {% endif %}
+        </div>
+        <div class="composer-meta">
+          <span class="composer-username">{{ user.username }}</span>
+          <span class="composer-action">is deleting a post</span>
+        </div>
+      </div>
+      <a href="{% url 'posts:detail' post.slug %}" class="composer-close" title="Cancel">
+        <i class="fa-solid fa-xmark"></i>
+      </a>
+    </div>
+
+    <div class="composer-form" style="padding: 32px 24px;">
+      <div style="text-align: center; padding: 24px 0;">
+        <div class="delete-warn-icon">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h2 class="delete-title">Delete this post?</h2>
+        <p class="delete-desc">
+          This action cannot be undone. The post and all its comments will be permanently removed.
+        </p>
+
+        <div class="delete-preview">
+          <h3>{{ post.title }}</h3>
+          <p>
+            Posted in {{ post.stage.name }} · {{ post.total_comments }} comment{{ post.total_comments|pluralize }} · {{ post.total_likes }} like{{ post.total_likes|pluralize }}
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <a href="{% url 'posts:detail' post.slug %}" class="publish-btn delete-cancel-btn">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span class="btn-text">Cancel</span>
+          </a>
+          <form method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="publish-btn" style="background: #dc2626;">
+              <i class="fa-solid fa-trash"></i>
+              <span class="btn-text">Delete Permanently</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

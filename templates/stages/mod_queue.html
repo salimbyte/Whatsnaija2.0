@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+<style>
+.mod-wrap { max-width: 900px; margin: 0 auto; padding: 28px 12px 40px; }
+.mod-header {
+  background: linear-gradient(135deg, #0C4B33 0%, #15805a 100%);
+  border-radius: var(--vz-radius);
+  padding: 20px 28px; margin-bottom: 16px; color: #fff;
+}
+.mod-header h1 { font-size: 18px; font-weight: 800; margin: 0 0 3px; }
+.mod-header p  { font-size: 12px; color: rgba(255,255,255,.7); margin: 0; }
+
+.mod-nav { display: flex; gap: 0; background: var(--vz-surface);
+  border: 1px solid var(--vz-border); border-radius: var(--vz-radius-sm);
+  overflow: hidden; margin-bottom: 16px; }
+.mod-nav a { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 8px; font-size: 12px; font-weight: 600;
+  color: var(--vz-text-muted); text-decoration: none;
+  border-right: 1px solid var(--vz-border); transition: all .15s; }
+.mod-nav a:last-child { border-right: none; }
+.mod-nav a:hover  { background: var(--vz-accent-soft); color: var(--vz-accent); }
+.mod-nav a.active { background: var(--vz-accent); color: #fff; }
+.mod-nav a .badge { background: #dc2626; color: #fff; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 999px; }
+
+.filter-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.filter-tab { padding: 6px 14px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  border: 1px solid var(--vz-border); background: var(--vz-surface);
+  color: var(--vz-text-muted); text-decoration: none; transition: all .15s; }
+.filter-tab:hover  { border-color: var(--vz-accent); color: var(--vz-accent); text-decoration: none; }
+.filter-tab.active { background: var(--vz-accent); color: #fff; border-color: var(--vz-accent); }
+
+.report-card { background: var(--vz-surface); border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius-sm); padding: 16px 18px; margin-bottom: 12px; }
+.report-card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.report-type { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+  border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  background: #fef2f2; color: #dc2626; letter-spacing: .4px; }
+.report-status { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+  text-transform: uppercase; }
+.status-pending  { background: #fff7ed; color: #c2410c; }
+.status-dismissed { background: var(--vz-surface-hover); color: var(--vz-text-muted); }
+.status-action_taken { background: #f0fdf4; color: var(--vz-accent); }
+
+.report-title { font-size: 14px; font-weight: 600; color: var(--vz-text); margin-bottom: 4px; }
+.report-title a { color: inherit; text-decoration: none; }
+.report-title a:hover { color: var(--vz-accent); }
+.report-meta  { font-size: 12px; color: var(--vz-text-muted); margin-bottom: 10px; }
+.report-desc  { font-size: 12px; color: var(--vz-text-muted); font-style: italic;
+  padding: 8px 12px; background: var(--vz-surface-hover); border-radius: var(--vz-radius-sm);
+  border-left: 3px solid var(--vz-border); margin-bottom: 12px; }
+
+.report-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+.report-actions input[type=text], .report-actions textarea, .report-actions select {
+  flex: 1; min-width: 160px; padding: 7px 10px; border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius-sm); font-size: 12px; font-family: var(--vz-font);
+  background: var(--vz-surface); color: var(--vz-text); outline: none; }
+.report-actions input:focus { border-color: var(--vz-accent); }
+
+.mod-btn { padding: 7px 14px; border-radius: var(--vz-radius-sm); font-size: 12px;
+  font-weight: 600; border: 1px solid var(--vz-border); background: var(--vz-surface);
+  cursor: pointer; font-family: var(--vz-font); transition: all .15s; white-space: nowrap; }
+.mod-btn:hover  { background: var(--vz-surface-hover); }
+.mod-btn.danger { color: #dc2626; border-color: #fecaca; }
+.mod-btn.danger:hover { background: #fef2f2; }
+.mod-btn.warn   { color: #d97706; border-color: #fde68a; }
+.mod-btn.warn:hover   { background: #fffbeb; }
+.mod-btn.success { color: var(--vz-accent); border-color: #bbf7d0; }
+.mod-btn.success:hover { background: #f0fdf4; }
+
+.mod-empty { padding: 32px 0; text-align: center; color: var(--vz-text-faint); font-size: 13px; }
+.mod-empty i { font-size: 28px; margin-bottom: 10px; display: block; }
+
+
+</style>
+{% endblock link %}
+
+{% block title %}Report Queue: {{ stage.name }} — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="mod-wrap">
+
+  <div class="mod-header">
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.6);margin-bottom:5px;">
+          <i class="fa-solid fa-shield-halved"></i> Stage Moderation — {{ stage.name }}
+    </div>
+    <h1><i class="fa-solid fa-flag"></i> Report Queue</h1>
+    <p>Review and take action on content reported by the community.</p>
+  </div>
+
+  <div class="mod-nav">
+    <a href="{% url 'stages:mod_dashboard' stage.name %}"><i class="fa-solid fa-gauge"></i> <span>Overview</span></a>
+    <a href="{% url 'stages:mod_queue' stage.name %}" class="active"><i class="fa-solid fa-flag"></i> <span>Queue</span>
+      {% if pending_count %}<span class="badge">{{ pending_count }}</span>{% endif %}</a>
+    <a href="{% url 'stages:mod_members' stage.name %}"><i class="fa-solid fa-users-gear"></i> <span>Members</span></a>
+    <a href="{% url 'stages:mod_log' stage.name %}"><i class="fa-solid fa-scroll"></i> <span>Log</span></a>
+    <a href="{% url 'stages:stage_page' stage.name %}"><i class="fa-solid fa-arrow-left"></i> <span>Back</span></a>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="filter-tabs">
+    <a href="?status=pending"  class="filter-tab{% if status_filter == 'pending' %} active{% endif %}">Pending</a>
+    <a href="?status=action_taken" class="filter-tab{% if status_filter == 'action_taken' %} active{% endif %}">Action Taken</a>
+    <a href="?status=dismissed" class="filter-tab{% if status_filter == 'dismissed' %} active{% endif %}">Dismissed</a>
+    <a href="?status=all"      class="filter-tab{% if status_filter == 'all' %} active{% endif %}">All</a>
+  </div>
+
+  {% for report in reports %}
+  <div class="report-card">
+    <div class="report-card-head">
+      <span class="report-type">{{ report.get_report_type_display }}</span>
+      <span class="report-status status-{{ report.status }}">{{ report.get_status_display }}</span>
+    </div>
+
+    {% if report.post %}
+    <div class="report-title">
+      <a href="{% url 'posts:detail' report.post.slug %}" target="_blank">{{ report.post.title }}</a>
+    </div>
+    <div class="report-meta">
+      Post by <strong>{{ report.post.author.username }}</strong>
+      · Reported by <strong>{{ report.reporter.username }}</strong>
+      · {{ report.created_at|timesince }} ago
+    </div>
+    {% elif report.comment %}
+    <div class="report-title">Comment by <strong>{{ report.comment.user.username|default:"[anonymous]" }}</strong></div>
+    <div class="report-meta">
+      Reported by <strong>{{ report.reporter.username }}</strong>
+      · {{ report.created_at|timesince }} ago
+    </div>
+    {% endif %}
+
+    {% if report.description %}
+    <div class="report-desc">"{{ report.description }}"</div>
+    {% endif %}
+
+    {% if report.status == 'pending' %}
+    <form method="post" action="{% url 'stages:mod_resolve_report' stage.name report.id %}" class="report-actions">
+      {% csrf_token %}
+      <input type="text" name="public_reason" placeholder="Public reason (shown to user)" />
+      <input type="text" name="mod_note" placeholder="Private mod note (optional)" />
+      <select name="ban_duration">
+        <option value="permanent" selected>Ban duration: Permanent (default)</option>
+        <option value="24h">Ban duration: 24 hours</option>
+        <option value="3d">Ban duration: 3 days</option>
+        <option value="7d">Ban duration: 7 days</option>
+      </select>
+      <button type="submit" name="action" value="dismiss" class="mod-btn">
+        <i class="fa-solid fa-xmark"></i> Dismiss
+      </button>
+      {% if report.post %}
+      <button type="submit" name="action" value="remove_post" class="mod-btn warn">
+        <i class="fa-solid fa-eye-slash"></i> Remove Post
+      </button>
+      {% endif %}
+      {% if report.comment %}
+      <button type="submit" name="action" value="delete_comment" class="mod-btn warn"
+        onclick="return confirm('Delete this comment?')">
+        <i class="fa-solid fa-trash"></i> Delete Comment
+      </button>
+      {% endif %}
+      <button type="submit" name="action" value="ban_user" class="mod-btn danger"
+        onclick="return confirm('Ban this user from {{ stage.name }}?')">
+        <i class="fa-solid fa-ban"></i> Stage Ban
+      </button>
+    </form>
+    {% else %}
+    <div style="font-size:12px;color:var(--vz-text-muted);">
+      <i class="fa-solid fa-circle-check"></i>
+      Resolved by {% if report.reviewed_by %}<strong>{{ report.reviewed_by.username }}</strong>{% else %}system{% endif %}
+      {% if report.public_reason %} · "{{ report.public_reason }}"{% endif %}
+      {% if report.mod_note %} · "{{ report.mod_note }}"{% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% empty %}
+  <div class="side-box">
+    <div class="side-box-body">
+      <div class="mod-empty">
+        <i class="fa-solid fa-circle-check"></i>
+        No reports here — keep up the great work!
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  {% if page_obj.has_other_pages %}
+  <div style="display:flex;justify-content:center;gap:6px;padding:16px;border-top:1px solid var(--vz-border-light);">
+    {% if page_obj.has_previous %}
+      <a href="?status={{ status_filter }}&page={{ page_obj.previous_page_number }}"
+         style="padding:5px 14px;border:1px solid var(--vz-border);border-radius:999px;font-size:12px;font-weight:600;text-decoration:none;color:var(--vz-text-muted);">&larr; Prev</a>
+    {% endif %}
+    <span style="padding:5px 14px;border:1px solid var(--vz-accent);border-radius:999px;font-size:12px;font-weight:600;background:var(--vz-accent);color:#fff;">
+      {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+    </span>
+    {% if page_obj.has_next %}
+      <a href="?status={{ status_filter }}&page={{ page_obj.next_page_number }}"
+         style="padding:5px 14px;border:1px solid var(--vz-border);border-radius:999px;font-size:12px;font-weight:600;text-decoration:none;color:var(--vz-text-muted);">Next &rarr;</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock content %}

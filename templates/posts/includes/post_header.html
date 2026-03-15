@@ -1,0 +1,32 @@
+{% load filter %}
+{% load humanize %}
+<div class="post-head">
+  <div class="post-head-content">
+
+    <!-- Author identity -->
+    <div class="post-author-row">
+      <a href="/s/{{post.stage.name}}" class="post-stage-avatar" title="{{post.stage.name}}" style="background:{{ post.stage.name|avatar_color }}">
+        <span class="avatar-initial">{{ post.stage.name|avatar_initials }}</span>
+      </a>
+      <div class="post-author-info">
+        <div class="post-author-top">
+          <a href="/s/{{post.stage.name}}" class="post-stage-link">{% if post.stage.title %}{{post.stage.title}}{% else %}{{post.stage.name}}{% endif %}</a>
+          <span class="post-author-in">·</span>
+          <span class="post-author-by">posted by</span>
+          <a href="/{{post.author.username}}" class="post-author-name">@{{post.author.username}}</a>
+          {% if post.author.is_staff %}<span class="c-mod">MOD</span>{% endif %}
+        </div>
+        <div class="post-author-sub">
+          <span class="post-time">{{post.created_at|custom_timesince}}</span>
+          {% if post.view_count > 10 %}<span class="sep">·</span><span class="post-views"><i class="fa-regular fa-eye"></i> {{ post.view_count }} view{{ post.view_count|pluralize }}</span>{% endif %}
+          <span class="sep">·</span>
+          <a href="#new-comment" class="meta-comments"><i class="fa-regular fa-comment"></i> {{comment_count}} comment{{comment_count|pluralize}}</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <h1 class="post-title">{{post.title}}</h1>
+
+  </div>
+</div>

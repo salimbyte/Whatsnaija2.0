@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load filter %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/communities.css' %}" />
+{% endblock link %}
+
+{% block title %}Stages — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="comm-page">
+
+  <div class="comm-header">
+    <div class="comm-header-text">
+      <h1 class="comm-title"><i class="fa-solid fa-layer-group"></i> Stages</h1>
+      <p class="comm-sub">{{ stages|length }} stages · Find your tribe and join the conversation</p>
+    </div>
+    {% if request.user.is_staff %}
+    <a href="{% url 'stages:create' %}" class="comm-create-btn"><i class="fa-solid fa-plus"></i> New Community</a>
+    {% endif %}
+  </div>
+
+  <!-- Search bar -->
+  <div class="comm-search-wrap">
+    <i class="fa-solid fa-magnifying-glass comm-search-icon"></i>
+    <input
+      type="text"
+      id="commSearch"
+      class="comm-search"
+      placeholder="Search stages…"
+      autocomplete="off"
+      autofocus
+    />
+    <span class="comm-count" id="commCount">{{ stages|length }}</span>
+  </div>
+
+  {% comment %}Render sections: first section (General) on left, rest on right{% endcomment %}
+  <div class="comm-sections-wrap">
+
+    {% for label, icon, cat_stages in grouped_stages %}
+    {% if forloop.first %}
+    <!-- LEFT: General -->
+    <div class="comm-col comm-col--left">
+    {% elif forloop.counter == 2 %}
+    <!-- RIGHT: Entertainment + Tech -->
+    <div class="comm-col comm-col--right">
+    {% endif %}
+
+    <div class="comm-section" data-section>
+      <h2 class="comm-section-title"><i class="{{ icon }}"></i> {{ label }}</h2>
+      <div class="comm-list">
+        {% for stage in cat_stages %}
+        <div class="comm-row"
+             data-name="{{ stage.name|lower }}"
+             data-title="{{ stage.title|lower }}"
+             data-desc="{{ stage.description|lower|default:'' }}">
+          <div class="comm-avatar" style="background:{{ stage.name|avatar_color }}">
+            {{ stage.name|avatar_initials }}
+          </div>
+          <div class="comm-row-info">
+            <a href="/s/{{ stage.name }}" class="comm-row-name">{{ stage.title }}</a>
+            <span class="comm-row-slug">{{ stage.name }}</span>
+            {% if stage.description %}
+            <span class="comm-row-desc">{{ stage.description|truncatechars:70 }}</span>
+            {% endif %}
+          </div>
+          <span class="comm-row-stats">
+            <i class="fa-solid fa-users"></i> {{ stage.members_count|intcomma }}
+          </span>
+          {% if request.user.is_authenticated %}
+            {% if is_member_map|get_item:stage.pk %}
+            <a href="/s/{{ stage.name }}/join/" class="comm-join-btn comm-join-btn--joined"
+               data-stage="{{ stage.name }}" onclick="return joinToggle(event, this)">
+              <i class="fa-solid fa-check"></i> Joined
+            </a>
+            {% else %}
+            <a href="/s/{{ stage.name }}/join/" class="comm-join-btn"
+               data-stage="{{ stage.name }}" onclick="return joinToggle(event, this)">
+              <i class="fa-solid fa-plus"></i> Join
+            </a>
+            {% endif %}
+          {% else %}
+          <a href="{% url 'users:login' %}?next={% url 'stages:stages' %}" class="comm-join-btn">Join</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div><!-- /comm-section -->
+
+    {% if forloop.first or forloop.last %}</div><!-- /comm-col -->{% endif %}
+    {% empty %}
+    <p class="comm-empty">No stages yet.</p>
+    {% endfor %}
+
+  </div><!-- /comm-sections-wrap -->
+
+  <p class="comm-no-results" id="commNoResults" style="display:none">
+    No stages match "<span id="commNoResultsQuery"></span>".
+  </p>
+
+</div>
+
+<script>
+(function () {
+  var input = document.getElementById('commSearch');
+  var counter = document.getElementById('commCount');
+  var noResults = document.getElementById('commNoResults');
+  var noResultsQ = document.getElementById('commNoResultsQuery');
+  var cards = Array.from(document.querySelectorAll('.comm-row'));
+  var sections = Array.from(document.querySelectorAll('[data-section]'));
+
+  input.addEventListener('input', function () {
+    var q = this.value.trim().toLowerCase();
+    var visible = 0;
+    cards.forEach(function (card) {
+      var match = !q
+        || card.dataset.name.includes(q)
+        || card.dataset.title.includes(q)
+        || card.dataset.desc.includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    // Hide section headers when all rows in that section are hidden
+    sections.forEach(function (section) {
+      var hasVisible = Array.from(section.querySelectorAll('.comm-row')).some(function (c) {
+        return c.style.display !== 'none';
+      });
+      section.style.display = hasVisible ? '' : 'none';
+    });
+    counter.textContent = visible;
+    noResults.style.display = (q && visible === 0) ? '' : 'none';
+    noResultsQ.textContent = q;
+  });
+})();
+
+function joinToggle(e, el) {
+  e.preventDefault();
+  var stage = el.dataset.stage;
+  fetch('/s/' + stage + '/join/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': window.CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (data.joined) {
+      el.innerHTML = '<i class="fa-solid fa-check"></i> Joined';
+      el.classList.add('comm-join-btn--joined');
+    } else {
+      el.innerHTML = '<i class="fa-solid fa-plus"></i> Join';
+      el.classList.remove('comm-join-btn--joined');
+    }
+  });
+  return false;
+}
+</script>
+{% endblock content %}

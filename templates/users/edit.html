@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+{% load static %}
+{% load filter %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/edit-profile.css' %}" />
+{% endblock link %}
+
+{% block title %}Edit Profile — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="edit-page">
+  <div class="edit-container">
+
+    <!-- Page Header -->
+    <div class="edit-header">
+      <div class="edit-header-left">
+        <h1>Edit Profile</h1>
+        <p>Update your personal information and preferences</p>
+      </div>
+      <a href="{% url 'profiles:user_profile' request.user.username %}" class="btn-back">
+        <i class="fa-solid fa-arrow-left"></i> Back to profile
+      </a>
+    </div>
+
+    {% if messages %}
+    <div class="form-messages">
+      {% for message in messages %}
+      <div class="form-alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+        <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" class="edit-form" novalidate>
+      {% csrf_token %}
+
+      <!-- Avatar Section -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fa-solid fa-camera"></i>
+          <span>Profile Photo</span>
+        </div>
+        <div class="avatar-upload">
+          <div class="avatar-preview" id="avatarPreview">
+            {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" alt="Current avatar" id="avatarImg" />
+            {% else %}
+            <div class="avatar-letter" id="avatarLetter" style="background:{{ request.user.username|avatar_color }}">{{ request.user.username|first|upper }}</div>
+            {% endif %}
+          </div>
+          <div class="avatar-actions">
+            <label for="{{ profile_form.avatar.id_for_label }}" class="btn-upload">
+              <i class="fa-solid fa-upload"></i> Choose photo
+            </label>
+            {{ profile_form.avatar }}
+            <p class="form-hint">JPG, PNG, GIF or WebP. Max 2 MB.</p>
+            {% if profile_form.avatar.errors %}
+            <p class="field-error">{{ profile_form.avatar.errors|first }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Banner Section -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fa-solid fa-panorama"></i>
+          <span>Banner Image</span>
+        </div>
+        <div class="banner-upload">
+          <div class="banner-preview" id="bannerPreview">
+            {% if profile.banner %}
+            <img src="{{ profile.banner.url }}" alt="Current banner" id="bannerImg" />
+            {% else %}
+            <div class="banner-placeholder" id="bannerPlaceholder">
+              <i class="fa-solid fa-image"></i>
+              <span>No banner yet</span>
+            </div>
+            {% endif %}
+          </div>
+          <div class="banner-actions">
+            <label for="{{ profile_form.banner.id_for_label }}" class="btn-upload">
+              <i class="fa-solid fa-upload"></i> Choose banner
+            </label>
+            {{ profile_form.banner }}
+            <p class="form-hint">JPG, PNG, GIF or WebP. Max 2 MB. Recommended: 1200×300px.</p>
+            {% if profile_form.banner.errors %}
+            <p class="field-error">{{ profile_form.banner.errors|first }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal Info Section -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fa-solid fa-user"></i>
+          <span>Personal Info</span>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="{{ user_form.first_name.id_for_label }}">{{ user_form.first_name.label }}</label>
+            {{ user_form.first_name }}
+            {% if user_form.first_name.errors %}
+            <p class="field-error">{{ user_form.first_name.errors|first }}</p>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label for="{{ user_form.last_name.id_for_label }}">{{ user_form.last_name.label }}</label>
+            {{ user_form.last_name }}
+            {% if user_form.last_name.errors %}
+            <p class="field-error">{{ user_form.last_name.errors|first }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="{{ user_form.email.id_for_label }}">{{ user_form.email.label }}</label>
+          {{ user_form.email }}
+          {% if user_form.email.errors %}
+          <p class="field-error">{{ user_form.email.errors|first }}</p>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ user_form.gender.id_for_label }}">{{ user_form.gender.label }}</label>
+          {{ user_form.gender }}
+          {% if user_form.gender.errors %}
+          <p class="field-error">{{ user_form.gender.errors|first }}</p>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ profile_form.birth_date.id_for_label }}">{{ profile_form.birth_date.label }}</label>
+          {{ profile_form.birth_date }}
+          <p class="form-hint">Format: YYYY-MM-DD</p>
+          {% if profile_form.birth_date.errors %}
+          <p class="field-error">{{ profile_form.birth_date.errors|first }}</p>
+          {% endif %}
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="{{ user_form.course.id_for_label }}">{{ user_form.course.label }}</label>
+            {{ user_form.course }}
+            {% if user_form.course.errors %}
+            <p class="field-error">{{ user_form.course.errors|first }}</p>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label for="{{ user_form.stage.id_for_label }}">{{ user_form.stage.label }}</label>
+            {{ user_form.stage }}
+            {% if user_form.stage.errors %}
+            <p class="field-error">{{ user_form.stage.errors|first }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Bio Section -->
+      <div class="form-section">
+        <div class="section-title">
+          <i class="fa-solid fa-pen"></i>
+          <span>About You</span>
+        </div>
+        <div class="form-group">
+          <label for="{{ profile_form.bio.id_for_label }}">{{ profile_form.bio.label }}</label>
+          {{ profile_form.bio }}
+          <p class="form-hint char-count"><span id="bioCount">0</span>/500</p>
+          {% if profile_form.bio.errors %}
+          <p class="field-error">{{ profile_form.bio.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ profile_form.location.id_for_label }}">{{ profile_form.location.label }}</label>
+          <div class="input-icon-wrap">
+            <i class="fa-solid fa-location-dot"></i>
+            {{ profile_form.location }}
+          </div>
+          {% if profile_form.location.errors %}
+          <p class="field-error">{{ profile_form.location.errors.0 }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="form-actions">
+        <a href="{% url 'profiles:user_profile' request.user.username %}" class="btn-cancel">Cancel</a>
+        <button type="submit" class="btn-save">
+          <i class="fa-solid fa-check"></i> Save Changes
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock content %}
+
+{% block script %}
+<script>
+(function () {
+
+  /* ── Inline file error helper ───────────────────────── */
+  function showFileError(inputEl, msg) {
+    var wrap = inputEl.closest('.avatar-upload, .banner-upload');
+    if (!wrap) return;
+    var existing = wrap.querySelector('.file-inline-error');
+    if (existing) existing.remove();
+    var el = document.createElement('p');
+    el.className = 'field-error file-inline-error';
+    el.textContent = msg;
+    wrap.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.remove(); }, 4000);
+  }
+
+  function clearFileError(inputEl) {
+    var wrap = inputEl.closest('.avatar-upload, .banner-upload');
+    if (wrap) { var e = wrap.querySelector('.file-inline-error'); if (e) e.remove(); }
+  }
+
+  var ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  var MAX_BYTES = 2 * 1024 * 1024;
+
+  function validateImageFile(file, inputEl) {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      showFileError(inputEl, 'Unsupported file type. Use JPG, PNG, GIF or WebP.');
+      inputEl.value = '';
+      return false;
+    }
+    if (file.size > MAX_BYTES) {
+      showFileError(inputEl, 'File too large. Maximum size is 2 MB.');
+      inputEl.value = '';
+      return false;
+    }
+    clearFileError(inputEl);
+    return true;
+  }
+
+  /* ── Avatar preview ─────────────────────────────────── */
+  var avatarInput = document.getElementById('{{ profile_form.avatar.id_for_label }}');
+  if (avatarInput) {
+    avatarInput.addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      if (!validateImageFile(file, avatarInput)) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        var preview = document.getElementById('avatarPreview');
+        var letter  = document.getElementById('avatarLetter');
+        var img     = document.getElementById('avatarImg');
+        if (letter) letter.remove();
+        if (img) {
+          img.src = ev.target.result;
+        } else {
+          img = document.createElement('img');
+          img.id  = 'avatarImg';
+          img.src = ev.target.result;
+          img.alt = 'Avatar preview';
+          preview.appendChild(img);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /* ── Banner preview ─────────────────────────────────── */
+  var bannerInput = document.getElementById('{{ profile_form.banner.id_for_label }}');
+  if (bannerInput) {
+    bannerInput.addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      if (!validateImageFile(file, bannerInput)) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        var preview     = document.getElementById('bannerPreview');
+        var placeholder = document.getElementById('bannerPlaceholder');
+        var img         = document.getElementById('bannerImg');
+        if (placeholder) placeholder.remove();
+        if (img) {
+          img.src = ev.target.result;
+        } else {
+          img = document.createElement('img');
+          img.id  = 'bannerImg';
+          img.src = ev.target.result;
+          img.alt = 'Banner preview';
+          preview.appendChild(img);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /* ── Bio character counter ──────────────────────────── */
+  var bioField = document.getElementById('{{ profile_form.bio.id_for_label }}');
+  var bioCount = document.getElementById('bioCount');
+  if (bioField && bioCount) {
+    function updateCount() {
+      var len = bioField.value.length;
+      bioCount.textContent = len;
+      var hint = bioCount.closest('.char-count');
+      if (hint) {
+        hint.classList.toggle('char-count--warn', len > 450);
+        hint.classList.toggle('char-count--over', len >= 500);
+      }
+    }
+    bioField.addEventListener('input', updateCount);
+    updateCount();
+  }
+
+  /* ── Unsaved-changes warning ────────────────────────── */
+  var form   = document.querySelector('.edit-form');
+  var isDirty = false;
+  if (form) {
+    form.addEventListener('change', function () { isDirty = true; });
+    form.addEventListener('input',  function () { isDirty = true; });
+    form.addEventListener('submit', function () { isDirty = false; });
+    window.addEventListener('beforeunload', function (e) {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    });
+  }
+
+  /* ── Save button loading state ──────────────────────── */
+  var saveBtn = document.querySelector('.btn-save');
+  if (form && saveBtn) {
+    form.addEventListener('submit', function () {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+    });
+  }
+
+})();
+</script>
+{% endblock script %}

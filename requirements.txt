@@ -1,0 +1,36 @@
+# Django Core
+Django==5.2.6
+asgiref==3.9.1
+sqlparse
+
+# Django Utilities
+bleach==6.2.0
+webencodings
+
+# Django Admin Extensions
+django-admin-searchable-dropdown
+django-admin-tools
+
+# Django Content & Media
+django-ckeditor
+django-avatar
+easy-thumbnails
+django-taggit  # kept for migration history
+
+# Other Utilities
+django-bower
+django-seed
+django-allauth
+PyJWT[crypto]
+timeago
+requests
+beautifulsoup4
+
+# Python Image Library (required for image processing)
+Pillow
+
+# Redis cache backend
+django-redis
+
+# Static files — compressed serving with long-lived cache headers
+whitenoise

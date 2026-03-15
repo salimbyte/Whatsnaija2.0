@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% load filter %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/stage.css' %}" />
+{% endblock link %}
+
+{% block title %}{{ stage.name }} — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="content-wrap">
+
+    <!-- Main Column -->
+    <div class="main-col">
+
+      <!-- Stage Hero Card -->
+      <div class="stage-card">
+        <div class="stage-banner{% if stage.image %} has-image{% endif %}">
+          {% if stage.image %}
+          <img src="{{ stage.image.url }}" alt="{{ stage.name }}" class="banner-img" />
+          {% else %}
+          <div class="banner-pattern"></div>
+          {% endif %}
+        </div>
+        <div class="stage-header">
+          <div class="stage-avatar" style="background:{{ stage.name|avatar_color }}">
+            <span>{{ stage.name|avatar_initials }}</span>
+          </div>
+          <div class="stage-info">
+            <div class="stage-name-row">
+              <h1 class="stage-name">{% if stage.title %}{{ stage.title }}{% else %}{{ stage.name }}{% endif %}</h1>
+              {% if stage.admin == request.user %}
+              <span class="stage-badge"><i class="fa-solid fa-crown"></i> Owner</span>
+              {% elif is_mod %}
+              <span class="stage-badge stage-badge--mod"><i class="fa-solid fa-shield-halved"></i> Mod</span>
+              {% endif %}
+            </div>
+            <p class="stage-slug-label">/s/{{ stage.name }}</p>
+            {% if stage.description %}
+            <p class="stage-description-inline">{{ stage.description }}</p>
+            {% endif %}
+            <div class="stage-meta-row">
+              <span class="stage-meta-item" id="stage-members-count"><i class="fa-solid fa-users"></i> <span id="stage-members-num">{{ stage.members_count|intcomma }}</span> members</span>
+              <span class="stage-meta-item"><i class="fa-solid fa-file-lines"></i> {{ post_count|intcomma }} posts</span>
+              <span class="stage-meta-item"><i class="fa-regular fa-calendar"></i> Since {{ stage.created_at|date:"M Y" }}</span>
+            </div>
+            <div class="stage-actions">
+              {% if request.user.is_authenticated %}
+              {% if is_banned %}
+              <span class="stage-btn stage-btn--banned" title="You are banned from this community"><i class="fa-solid fa-ban"></i> Banned</span>
+              {% else %}
+              <a href="{% url 'posts:create' %}" class="stage-btn primary"><i class="fa-solid fa-plus"></i> Create Post</a>
+              {% if stage.admin == request.user or request.user.is_staff %}
+              {# Only the stage owner / platform staff can edit stage settings #}
+              <a href="{% url 'stages:edit' stage.name %}" class="stage-btn"><i class="fa-solid fa-pen"></i> Edit</a>
+              {% endif %}
+              {% if is_mod %}
+              {# Mods and the owner both get Mod Tools #}
+              <a href="{% url 'stages:mod_dashboard' stage.name %}" class="stage-btn stage-btn--mod"><i class="fa-solid fa-shield-halved"></i> Mod Tools</a>
+              {% endif %}
+              {% if not is_mod and stage.admin != request.user %}
+              {# Regular members (not mod, not owner) get the Join/Leave toggle #}
+              <button class="stage-btn stage-btn--join{% if is_member %} joined{% endif %}"
+                      id="join-btn"
+                      onclick="toggleJoin(this, '{% url 'stages:join_stage' stage.name %}', '{{ csrf_token }}')"
+                      data-joined="{% if is_member %}1{% else %}0{% endif %}">
+                <i class="fa-solid {% if is_member %}fa-check{% else %}fa-user-plus{% endif %}"></i>
+                <span id="join-btn-label">{% if is_member %}Joined{% else %}Join{% endif %}</span>
+              </button>
+              {% endif %}
+              {% endif %}
+              {% else %}
+              {# Logged-out visitors see a sign-up prompt #}
+              <a href="{% url 'users:register' %}" class="stage-btn primary"><i class="fa-solid fa-user-plus"></i> Join WhatsNaija</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sort Bar -->
+      <div class="sort-bar sort-bar--stage">
+        <a href="?sort=popular" class="sort-tab{% if sort_by == 'popular' %} active{% endif %}"{% if sort_by == 'popular' %} aria-current="page"{% endif %}>
+          <i class="fa-solid fa-fire"></i> Hot
+        </a>
+        <a href="?sort=new" class="sort-tab{% if sort_by == 'new' %} active{% endif %}"{% if sort_by == 'new' %} aria-current="page"{% endif %}>
+          <i class="fa-solid fa-clock"></i> New
+        </a>
+        <a href="?sort=top" class="sort-tab{% if sort_by == 'top' %} active{% endif %}"{% if sort_by == 'top' %} aria-current="page"{% endif %}>
+          <i class="fa-solid fa-arrow-trend-up"></i> Top
+        </a>
+      </div>
+
+      <!-- Posts Feed -->
+      <div class="post-list">
+        {% if is_banned %}
+        <div class="stage-ban-notice">
+          <i class="fa-solid fa-ban"></i>
+          <div>
+            <strong>You are banned from {% if stage.title %}{{ stage.title }}{% else %}{{ stage.name }}{% endif %}.</strong>
+            You cannot post or comment in this community.
+            {% if active_ban and active_ban.reason %}
+              <div style="margin-top:6px;"><strong>Reason:</strong> {{ active_ban.reason }}</div>
+            {% endif %}
+            {% if active_ban and active_ban.expires_at %}
+              <div><strong>Ban ends:</strong> {{ active_ban.expires_at|date:"M j, Y H:i" }}</div>
+            {% endif %}
+            <div style="margin-top:6px;">
+              If you believe this is a mistake, <a href="{% url 'moderations:appeal' %}?type=stage_ban&source=stage:{{ stage.name }}" style="color:#dc2626;font-weight:600;">appeal this decision</a>
+              or <a href="#mod-team" style="color:#dc2626;font-weight:600;">message the mod team ↓</a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% for post in posts %}
+        <article class="post-row">
+          {% if post.images.count or post.og_image %}
+          <div class="post-thumb">
+            {% if post.images.count %}
+            <img src="{{ post.images.first.image.url }}" alt="{{ post.title }}" class="thumb-img" loading="lazy" />
+            {% else %}
+            <img src="{{ post.og_image }}" alt="{{ post.title }}" class="thumb-img" loading="lazy" />
+            {% endif %}
+          </div>
+          {% endif %}
+          <div class="post-main">
+            {% if is_mod %}
+            <div class="mod-post-controls">
+              <button class="mod-post-btn" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('open')" title="Mod Actions" aria-label="Mod Actions">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+              </button>
+              <div class="mod-post-menu">
+                <form method="post" action="{% url 'stages:mod_remove_post' stage.name post.id %}"
+                  onsubmit="return confirm('Remove this post?')">
+                  {% csrf_token %}
+                  <input type="hidden" name="reason" value="Moderator removal" />
+                  <button type="submit" class="mod-menu-item mod-menu-item--danger">
+                    <i class="fa-solid fa-trash-can"></i> Remove Post
+                  </button>
+                </form>
+                <a href="{% url 'stages:mod_members' stage.name %}#bans" class="mod-menu-item" onclick="event.stopPropagation()">
+                  <i class="fa-solid fa-ban"></i> Ban User
+                </a>
+              </div>
+            </div>
+            {% endif %}
+            <div class="post-title-line">
+              <a href="{% url 'posts:detail' post.slug %}" class="post-title" onclick="event.stopPropagation()">{{ post.title }}</a>
+              {% if post.url %}
+              <a href="{{ post.url }}" class="post-domain-link" target="_blank" rel="noopener noreferrer" title="{{ post.url }}" onclick="event.stopPropagation()">{{ post.url|get_domain_from_url }}</a>
+              {% endif %}
+            </div>
+            {% if post.body %}
+            <p class="post-snippet">{{ post.body|clean_excerpt:22 }}</p>
+            {% endif %}
+            <div class="post-meta">
+              <span class="meta-likes"><i class="fa-solid fa-arrow-up"></i> {{ post.like_count }}</span>
+              <span class="meta-sep">·</span>
+              <a href="{% url 'posts:detail' post.slug %}#comments" class="meta-comments" onclick="event.stopPropagation()"><i class="fa-regular fa-comment"></i> {{ post.comment_count }}</a>
+              <span class="meta-sep">·</span>
+              <span class="meta-byline">by <a href="/{{ post.author.username }}" onclick="event.stopPropagation()">{{ post.author.username }}</a>{% if post.author.is_staff %} <span class="meta-mod-chip">MOD</span>{% endif %}</span>
+              <span class="meta-sep">·</span>
+              <span class="meta-time"><i class="fa-regular fa-clock"></i> {{ post.created_at|custom_timesince }}</span>
+            </div>
+          </div>
+          <a class="post-row-link" href="{% url 'posts:detail' post.slug %}" aria-hidden="true" tabindex="-1"></a>
+        </article>
+        {% empty %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fa-solid fa-pen-fancy"></i></div>
+          <h3>No posts yet</h3>
+          <p>Be the first to start a conversation in {% if stage.title %}{{ stage.title }}{% else %}{{ stage.name }}{% endif %}.</p>
+          {% if request.user.is_authenticated %}
+          <a href="{% url 'posts:create' %}" class="stage-btn primary"><i class="fa-solid fa-plus"></i> Create Post</a>
+          {% else %}
+          <a href="{% url 'users:register' %}" class="stage-btn primary"><i class="fa-solid fa-user-plus"></i> Join WhatsNaija</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if posts.has_other_pages %}
+      <div class="pager">
+        {% if posts.has_previous %}
+        <a href="?sort={{ sort_by }}&page={{ posts.previous_page_number }}" class="pager-btn" aria-label="Previous page"><i class="fa-solid fa-chevron-left"></i></a>
+        {% endif %}
+        {% for page_num in posts.paginator.page_range %}
+          {% if page_num == posts.number %}
+          <span class="pager-num pager-num--current">{{ page_num }}</span>
+          {% elif page_num == 1 or page_num == posts.paginator.num_pages or page_num >= posts.number|add:"-2" and page_num <= posts.number|add:"2" %}
+          <a href="?sort={{ sort_by }}&page={{ page_num }}" class="pager-num">{{ page_num }}</a>
+          {% elif page_num == posts.number|add:"-3" or page_num == posts.number|add:"3" %}
+          <span class="pager-ellipsis">…</span>
+          {% endif %}
+        {% endfor %}
+        {% if posts.has_next %}
+        <a href="?sort={{ sort_by }}&page={{ posts.next_page_number }}" class="pager-btn" aria-label="Next page"><i class="fa-solid fa-chevron-right"></i></a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Sidebar -->
+    <div class="side-col">
+
+      <!-- Rules -->
+      <div class="side-box">
+        <div class="side-box-title"><i class="fa-solid fa-gavel"></i> Community Rules</div>
+        <div class="side-box-body">
+          <ol class="rules-list">
+            <li>Be respectful to others</li>
+            <li>Stay on topic</li>
+            <li>No spam or self-promotion</li>
+            <li>Follow <a href="{% url 'rules' %}">site-wide rules</a></li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Mod Team -->
+      <div class="side-box" id="mod-team">
+        <div class="side-box-title"><i class="fa-solid fa-shield-halved"></i> Mod Team</div>
+        <div class="side-box-body" style="padding: 10px 14px;">
+          {% if stage.admin %}
+          <div class="mod-team-row">
+            <div class="mod-team-avatar" {% if not stage.admin.profile.avatar %}style="background:{{ stage.admin.username|avatar_color }}"{% endif %}>
+              {% if stage.admin.profile.avatar %}<img src="{{ stage.admin.profile.avatar.url }}" alt="{{ stage.admin.username }}" />{% else %}{{ stage.admin.username|first|upper }}{% endif %}
+            </div>
+            <div class="mod-team-info">
+              <a href="/{{ stage.admin.username }}/" class="mod-team-name">{{ stage.admin.username }}</a>
+              <span class="owner-pill"><i class="fa-solid fa-crown"></i> Owner</span>
+            </div>
+            {% if request.user.is_authenticated and request.user != stage.admin %}
+            <a href="{% url 'users:conversation' stage.admin.username %}" class="mod-team-dm" title="Send DM"><i class="fa-solid fa-envelope"></i></a>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% for mod in stage_mods %}
+          <div class="mod-team-row">
+            <div class="mod-team-avatar" {% if not mod.user.profile.avatar %}style="background:{{ mod.user.username|avatar_color }}"{% endif %}>
+              {% if mod.user.profile.avatar %}<img src="{{ mod.user.profile.avatar.url }}" alt="{{ mod.user.username }}" />{% else %}{{ mod.user.username|first|upper }}{% endif %}
+            </div>
+            <div class="mod-team-info">
+              <a href="/{{ mod.user.username }}/" class="mod-team-name">{{ mod.user.username }}</a>
+              <span class="mod-pill"><i class="fa-solid fa-shield-halved"></i> Mod</span>
+            </div>
+            {% if request.user.is_authenticated and request.user != mod.user %}
+            <a href="{% url 'users:conversation' mod.user.username %}" class="mod-team-dm" title="Send DM"><i class="fa-solid fa-envelope"></i></a>
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% if not stage.admin and not stage_mods %}
+          <p style="font-size:12px;color:var(--vz-text-faint);padding:4px 0;">No moderators assigned.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Other Stages -->
+      {% if all_stages %}
+      <div class="side-box">
+        <div class="side-box-title"><i class="fa-solid fa-layer-group"></i> Other stages</div>
+        <div class="side-box-body" style="padding: 6px;">
+          <ul class="other-stages-list">
+            {% for s in all_stages|slice:":8" %}
+            {% if s.name != stage.name and s.members_count >= 10 %}
+            <li>
+              <a href="/s/{{ s.name }}">
+                <span class="stage-mini-avatar" style="background:{{ s.name|avatar_color }}">{{ s.name|avatar_initials }}</span>
+                <span class="stage-mini-body">
+                  <span class="stage-mini-name">{% if s.title %}{{ s.title }}{% else %}{{ s.name }}{% endif %}</span>
+                </span>
+                {% if s.members_count %}<span class="stage-mini-count">{{ s.members_count }}</span>{% endif %}
+              </a>
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+          <a href="{% url 'stages:stages' %}" class="stages-browse-link">Browse all</a>
+        </div>
+      </div>
+      {% endif %}
+
+      {% include "includes/sidebar_footer.html" %}
+
+    </div>
+
+  </div>
+</div>
+{% if is_mod %}
+<script>
+document.addEventListener('click', function(e) {
+  document.querySelectorAll('.mod-post-menu.open').forEach(function(m) {
+    if (!m.parentElement.contains(e.target)) m.classList.remove('open');
+  });
+});
+</script>
+{% endif %}
+<script>
+function toggleJoin(btn, url, csrf) {
+  fetch(url, {
+    method: 'POST',
+    headers: {'X-CSRFToken': csrf, 'Content-Type': 'application/x-www-form-urlencoded'},
+    body: ''
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    var joined = data.joined;
+    btn.dataset.joined = joined ? '1' : '0';
+    btn.classList.toggle('joined', joined);
+    var icon = btn.querySelector('i');
+    icon.className = 'fa-solid ' + (joined ? 'fa-check' : 'fa-user-plus');
+    document.getElementById('join-btn-label').textContent = joined ? 'Joined' : 'Join';
+    // Update member count in header if present
+    var mc = document.getElementById('stage-members-num');
+    if (mc) mc.textContent = data.members_count.toLocaleString();
+  });
+}
+</script>
+{% endblock content %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/mod.css' %}" />
+{% endblock link %}
+
+{% block title %}Blocked Posts — WhatsNaija Moderation{% endblock title %}
+
+{% block content %}
+<div class="mod-wrap">
+
+  <div class="mod-page-header">
+    <div class="mod-header-label"><i class="fa-solid fa-shield-halved"></i> Platform Moderation</div>
+    <h1>Blocked Posts</h1>
+    <p>All posts removed from public view. Restore them here.</p>
+  </div>
+
+  {% include "moderations/_mod_nav.html" %}
+
+  <div class="mod-box" style="margin-top:16px;">
+    {% if page_obj.paginator.count %}
+    <div class="mod-results-strip">
+      <i class="fa-solid fa-ban" style="color:#dc2626;margin-right:4px;"></i>
+      {{ page_obj.paginator.count }} blocked post{{ page_obj.paginator.count|pluralize }} total
+    </div>
+    {% endif %}
+
+    {% for post in page_obj %}
+    <div class="mod-post-row">
+      <div class="mod-post-body">
+        <a href="{% url 'posts:detail' post.slug %}" class="mod-post-title" target="_blank" rel="noopener noreferrer">
+          {{ post.title|truncatechars:90 }}
+        </a>
+        <div class="mod-post-meta">
+          by <strong>{{ post.author.username }}</strong>
+          {% if post.stage %}
+          &nbsp;&middot;&nbsp;
+          <a href="{% url 'stages:detail' post.stage.name %}">{{ post.stage.name }}</a>
+          {% endif %}
+          &nbsp;&middot;&nbsp; {{ post.updated_at|naturaltime }}
+          &nbsp;&middot;&nbsp; <span class="status-pill status-pill--blocked"><i class="fa-solid fa-ban"></i> Blocked</span>
+        </div>
+      </div>
+      <div style="flex-shrink:0;">
+        <form method="post" action="{% url 'moderations:toggle_block' post.id %}" style="margin:0;">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'moderations:blocked_posts' %}?page={{ page_obj.number }}" />
+          <button type="submit" class="mod-btn mod-btn--success mod-btn--sm"
+            onclick="return confirm('Restore this post to public view?')">
+            <i class="fa-solid fa-rotate-left"></i> Restore
+          </button>
+        </form>
+      </div>
+    </div>
+    {% empty %}
+    <div class="mod-empty">
+      <i class="fa-solid fa-circle-check"></i>
+      No blocked posts.
+      <p>All content is currently publicly visible.</p>
+    </div>
+    {% endfor %}
+
+    {% if page_obj.has_other_pages %}
+    <div class="mod-pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">&larr; Prev</a>
+      {% endif %}
+      <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Next &rarr;</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock content %}

@@ -1,0 +1,607 @@
+/* ============================================
+   VAZE — Platform Moderation
+   Matches site design language exactly.
+   ============================================ */
+
+/* === Same tokens as index.css / stage.css === */
+
+
+/* ── Page wrapper ───────────────────────────────────────── */
+.mod-wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px 14px 80px;
+}
+
+/* ── Page header — matches stage mod_dashboard gradient style ── */
+.mod-page-header {
+  background: var(--vz-gradient);
+  border-radius: var(--vz-radius);
+  padding: 22px 28px 20px;
+  margin-bottom: 16px;
+  color: #fff;
+  position: relative; overflow: hidden;
+}
+.mod-page-header::after {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 160px; height: 160px;
+  background: rgba(255,255,255,.05); border-radius: 50%;
+  pointer-events: none;
+}
+.mod-header-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+  color: rgba(255,255,255,.6); margin-bottom: 6px;
+}
+.mod-page-header h1 {
+  font-size: 20px; font-weight: 800; margin: 0 0 4px; color: #fff; line-height: 1.2;
+}
+.mod-page-header p {
+  font-size: 13px; color: rgba(255,255,255,.7); margin: 0;
+}
+
+/* ── Tab nav — exact match to site sort-bar ────────────── */
+.mod-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--vz-surface);
+  border: 1px solid var(--vz-border);
+  border-bottom: none;
+  border-top: 4px solid var(--vz-top-border);
+  border-radius: var(--vz-radius) var(--vz-radius) 0 0;
+  padding: 6px 10px;
+  margin-bottom: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: sticky;
+  top: 76px;
+  z-index: 8;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+.mod-nav::-webkit-scrollbar { display: none; }
+
+.mod-nav a {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  color: var(--vz-text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.mod-nav a:hover {
+  background: var(--vz-accent-soft);
+  color: var(--vz-accent);
+  text-decoration: none;
+}
+.mod-nav a.active {
+  color: var(--vz-accent);
+  background: var(--vz-accent-soft);
+  border-color: var(--vz-accent-glow);
+  box-shadow: inset 0 -2px 0 var(--vz-accent);
+  font-weight: 700;
+}
+.mod-nav a i { font-size: 11px; }
+.mod-nav a:focus-visible {
+  outline: none;
+  border-color: var(--vz-accent);
+  box-shadow: 0 0 0 2px var(--vz-accent-glow);
+}
+.mod-nav .nav-badge {
+  background: #dc2626; color: #fff;
+  font-size: 10px; font-weight: 700; line-height: 16px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  border-radius: 999px; text-align: center;
+}
+
+/* ── Section container (white card bordered bottom-radius) */
+.mod-section {
+  background: var(--vz-surface);
+  border: 1px solid var(--vz-border);
+  border-radius: 0 0 var(--vz-radius) var(--vz-radius);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+/* For standalone boxes not attached to nav */
+.mod-box {
+  background: var(--vz-surface);
+  border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.03);
+}
+.mod-box-title {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+  color: var(--vz-text-secondary);
+  border-bottom: 1px solid var(--vz-border-light);
+}
+.mod-box-title i { font-size: 10px; color: var(--vz-accent); margin-right: 5px; }
+.mod-box-title a { font-size: 11px; font-weight: 600; color: var(--vz-accent); text-decoration: none; text-transform: none; letter-spacing: 0; }
+.mod-box-title a:hover { text-decoration: underline; }
+
+/* ── Stats grid ─────────────────────────────────────────── */
+.mod-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+@media (max-width: 640px) { .mod-stats { grid-template-columns: repeat(2, 1fr); } }
+
+.mod-stats--dashboard {
+  margin-top: 16px;
+  grid-template-columns: repeat(5, 1fr);
+}
+@media (max-width: 980px) { .mod-stats--dashboard { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px) { .mod-stats--dashboard { grid-template-columns: repeat(2, 1fr); } }
+
+.mod-stat-card {
+  background: var(--vz-surface);
+  border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius);
+  padding: 14px 18px;
+  text-decoration: none;
+  display: block;
+  box-shadow: 0 1px 3px rgba(0,0,0,.03);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+a.mod-stat-card:hover {
+  border-color: var(--vz-accent);
+  box-shadow: 0 2px 8px var(--vz-accent-glow);
+  text-decoration: none;
+}
+.mod-stat-card--center { text-align: center; }
+.mod-stat-icon {
+  width: 32px; height: 32px; border-radius: var(--vz-radius-sm);
+  background: var(--vz-accent-soft);
+  border: 1px solid var(--vz-accent-glow);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--vz-accent);
+  margin-bottom: 10px;
+}
+.mod-stat-val {
+  display: block;
+  font-size: 24px; font-weight: 800; color: var(--vz-text); line-height: 1;
+}
+.mod-stat-val.is-danger { color: var(--vz-danger); }
+.mod-stat-val.is-warning { color: var(--vz-warning); }
+.mod-stat-val.is-amber { color: var(--vz-terra); }
+.mod-stat-lbl {
+  display: block;
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px;
+  color: var(--vz-text-faint); margin-top: 4px;
+}
+/* color variant accents on icon only */
+.mod-stat-card--red   .mod-stat-icon { background: var(--vz-danger-bg); border-color: var(--vz-danger-border); color: var(--vz-danger); }
+.mod-stat-card--amber .mod-stat-icon { background: var(--vz-warning-bg); border-color: var(--vz-warning-border); color: var(--vz-warning); }
+.mod-stat-card--green .mod-stat-icon { background: var(--vz-success-bg); border-color: var(--vz-success-border); color: var(--vz-accent); }
+.mod-stat-card--blue  .mod-stat-icon { background: var(--vz-info-bg); border-color: var(--vz-info-border); color: var(--vz-info); }
+
+/* ── Two-column layout ──────────────────────────────────── */
+.mod-two-col {
+  display: grid;
+  grid-template-columns: 1fr 310px;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 768px) { .mod-two-col { grid-template-columns: 1fr; } }
+.mod-two-col--equal { grid-template-columns: 1fr 1fr; }
+@media (max-width: 768px) { .mod-two-col--equal { grid-template-columns: 1fr; } }
+
+/* ── Section heading row ────────────────────────────────── */
+.mod-section-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--vz-border-light);
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: var(--vz-text-secondary);
+}
+.mod-section-head i { font-size: 10px; color: var(--vz-accent); margin-right: 4px; }
+.mod-section-head a { font-size: 11px; font-weight: 600; color: var(--vz-accent); text-decoration: none; text-transform: none; letter-spacing: 0; }
+.mod-section-head a:hover { text-decoration: underline; }
+.mod-pending-count {
+  background: #dc2626; color: #fff;
+  font-size: 10px; font-weight: 700; line-height: 16px;
+  min-width: 16px; height: 16px; padding: 0 5px;
+  border-radius: 999px; text-align: center; margin-left: 6px;
+  text-transform: none; letter-spacing: 0;
+}
+
+/* ── Report card — matches post-row visually ────────────── */
+.mod-report-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-bottom: 1px solid var(--vz-border-light);
+  transition: background 0.15s ease;
+}
+.mod-report-card:last-child { border-bottom: none; }
+.mod-report-card:hover { background: var(--vz-accent-soft); }
+.mod-report-card--urgent { border-left: 3px solid var(--vz-danger); }
+.mod-report-card--warn   { border-left: 3px solid var(--vz-warning); }
+
+.mod-report-top {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 6px;
+  padding: 10px 18px 6px;
+}
+.mod-report-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mod-report-time   { font-size: 11px; color: var(--vz-text-faint); white-space: nowrap; }
+.mod-report-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vz-accent);
+  text-decoration: none;
+}
+.mod-report-link:hover { text-decoration: underline; }
+.mod-report-link--muted { color: var(--vz-text-muted); font-weight: 500; }
+
+.mod-report-body {
+  padding: 0 18px 10px;
+}
+.mod-report-subject {
+  font-size: 13px; font-weight: 600; color: var(--vz-text);
+  display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;
+}
+.mod-report-subject a { color: var(--vz-accent); text-decoration: none; }
+.mod-report-subject a:hover { text-decoration: underline; }
+.mod-report-subject .by { font-size: 12px; font-weight: 400; color: var(--vz-text-muted); }
+.mod-report-preview {
+  font-size: 12px; color: var(--vz-text-muted); font-style: italic; line-height: 1.5;
+  padding: 6px 10px; margin: 4px 0 2px;
+  background: var(--vz-bg);
+  border-left: 2px solid var(--vz-border);
+  border-radius: 0 var(--vz-radius-sm) var(--vz-radius-sm) 0;
+}
+.mod-report-note { font-size: 12px; color: var(--vz-text-secondary); margin-top: 4px; }
+.mod-report-note strong { color: var(--vz-accent); }
+.mod-reviewer { font-size: 11px; color: var(--vz-text-faint); margin-top: 3px; }
+
+.mod-report-actions {
+  padding: 8px 18px 12px;
+  display: flex; flex-direction: column; gap: 7px;
+  background: var(--vz-bg);
+  border-top: 1px solid var(--vz-border-light);
+}
+.mod-note-input {
+  width: 100%; padding: 8px 12px;
+  border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius-sm);
+  font-size: 13px; font-family: inherit;
+  background: var(--vz-surface); color: var(--vz-text);
+  box-sizing: border-box; resize: none;
+  transition: border-color .15s;
+}
+.mod-note-input:focus { outline: none; border-color: var(--vz-accent); box-shadow: 0 0 0 2px var(--vz-accent-glow); }
+.mod-select {
+  width: 100%; padding: 7px 12px;
+  border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius-sm);
+  font-size: 12px; font-family: inherit;
+  background: var(--vz-surface); color: var(--vz-text);
+}
+.mod-action-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.mod-action-divider { width: 1px; height: 20px; background: var(--vz-border); flex-shrink: 0; }
+
+/* ── Buttons — match stage-btn pattern exactly ──────────── */
+.mod-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  border: 1px solid var(--vz-border);
+  background: var(--vz-surface);
+  color: var(--vz-text-secondary);
+  cursor: pointer; text-decoration: none; white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.mod-btn:hover { background: var(--vz-surface-hover); border-color: var(--vz-border); text-decoration: none; }
+.mod-btn i { font-size: 11px; }
+
+.mod-btn--primary { background: var(--vz-accent); color: #fff; border-color: var(--vz-accent); }
+.mod-btn--primary:hover { background: var(--vz-accent-hover); border-color: var(--vz-accent-hover); }
+
+.mod-btn--danger  { color: var(--vz-danger); border-color: #fca5a5; background: #fff; }
+.mod-btn--danger:hover  { background: var(--vz-danger-bg); border-color: var(--vz-danger); }
+
+.mod-btn--warn    { color: #b45309; border-color: #fcd34d; background: #fff; }
+.mod-btn--warn:hover    { background: var(--vz-warning-bg); border-color: var(--vz-warning); }
+
+.mod-btn--success { color: var(--vz-success); border-color: var(--vz-success-border); background: #fff; }
+.mod-btn--success:hover { background: var(--vz-success-bg); border-color: var(--vz-success); }
+
+.mod-btn--sm { padding: 5px 12px; font-size: 12px; }
+
+/* ── Badges ─────────────────────────────────────────────── */
+.mod-type-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: var(--vz-radius-sm);
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+}
+.mod-type-badge,
+.mod-type-badge--spam       { background: var(--vz-danger-bg); color: var(--vz-danger); }
+.mod-type-badge--harassment { background: #fff7ed; color: #c2410c; }
+.mod-type-badge--hate_speech{ background: #fdf2f8; color: #9d174d; }
+.mod-type-badge--misinformation { background: #eef2ff; color: #4338ca; }
+.mod-type-badge--nsfw       { background: #fef3c7; color: var(--vz-warning); }
+.mod-type-badge--appeal     { background: #eff6ff; color: #2563eb; }
+.mod-type-badge--other      { background: var(--vz-accent-soft); color: var(--vz-accent); border: 1px solid var(--vz-accent-glow); }
+
+.mod-status-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700;
+}
+.mod-status-badge.pending      { background: #fef3c7; color: var(--vz-warning); }
+.mod-status-badge.dismissed    { background: var(--vz-bg); color: var(--vz-text-muted); border: 1px solid var(--vz-border); }
+.mod-status-badge.action_taken { background: var(--vz-danger-bg); color: var(--vz-danger); }
+.mod-status-badge.reviewed     { background: var(--vz-info-bg); color: var(--vz-info); }
+
+/* ── Action log rows ────────────────────────────────────── */
+.mod-log-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;
+  padding: 9px 18px;
+  border-bottom: 1px solid var(--vz-border-light);
+  font-size: 12px; color: var(--vz-text);
+  overflow: hidden;
+  transition: background .15s;
+}
+.mod-log-row:last-child { border-bottom: none; }
+.mod-log-row:hover { background: var(--vz-surface-hover); }
+.mod-log-actor { font-weight: 600; color: var(--vz-text); }
+.mod-log-target { color: var(--vz-text-muted); }
+.mod-log-target a { color: inherit; text-decoration: none; }
+.mod-log-target a:hover { color: var(--vz-accent); }
+.mod-log-reason {
+  font-size: 11px; color: var(--vz-text-faint); font-style: italic;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;
+}
+.mod-log-time { color: var(--vz-text-faint); margin-left: auto; white-space: nowrap; font-size: 11px; }
+.mod-log-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--vz-text-muted);
+}
+
+.mod-action-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 7px; border-radius: var(--vz-radius-sm);
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap;
+}
+.mod-action-badge.block_post,
+.mod-action-badge.delete_post,
+.mod-action-badge.delete_comment { background: var(--vz-danger-bg); color: var(--vz-danger); }
+.mod-action-badge.unblock_post,
+.mod-action-badge.unban_user     { background: var(--vz-success-bg); color: var(--vz-success); }
+.mod-action-badge.resolve_report { background: var(--vz-success-bg); color: var(--vz-success); }
+.mod-action-badge.ban_user       { background: #fff7ed; color: #c2410c; }
+.mod-action-badge.stage_ban      { background: #fff7ed; color: #c2410c; }
+.mod-action-badge.stage_unban    { background: var(--vz-success-bg); color: var(--vz-success); }
+.mod-action-badge.add_mod        { background: var(--vz-info-bg); color: var(--vz-info); }
+.mod-action-badge.add_super_mod  { background: var(--vz-info-bg); color: var(--vz-info); }
+.mod-action-badge.remove_mod,
+.mod-action-badge.remove_super_mod,
+.mod-action-badge.dismiss_report { background: var(--vz-bg);  color: var(--vz-text-muted); border: 1px solid var(--vz-border); }
+
+/* ── Filter tabs ────────────────────────────────────────── */
+.mod-filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--vz-border-light);
+  overflow-x: auto; scrollbar-width: none;
+  background: var(--vz-surface);
+  flex-wrap: wrap;
+}
+.mod-filter-wrap::-webkit-scrollbar { display: none; }
+
+.mod-filter-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  color: var(--vz-text-muted); text-decoration: none; white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.mod-filter-tab:hover { background: var(--vz-accent-soft); color: var(--vz-accent); text-decoration: none; }
+.mod-filter-tab.active { color: var(--vz-accent); background: var(--vz-accent-glow); font-weight: 700; }
+.mod-filter-tab i { font-size: 11px; }
+.mod-filter-badge {
+  background: #dc2626; color: #fff;
+  font-size: 10px; font-weight: 700; line-height: 16px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  border-radius: 999px; text-align: center;
+}
+
+/* ── Search bar ─────────────────────────────────────────── */
+.mod-search-form {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--vz-border-light);
+  background: var(--vz-surface);
+}
+.mod-search-wrap { flex: 1; min-width: 180px; position: relative; }
+.mod-search-wrap i {
+  position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+  color: var(--vz-text-faint); font-size: 12px; pointer-events: none;
+}
+.mod-search-input {
+  width: 100%; padding: 8px 12px 8px 32px;
+  border: 1px solid var(--vz-border);
+  border-radius: 999px;
+  font-size: 13px; font-family: inherit;
+  background: var(--vz-bg); color: var(--vz-text);
+  box-sizing: border-box; transition: border-color .15s, background .15s;
+}
+.mod-search-input:focus { outline: none; background: var(--vz-surface); border-color: var(--vz-accent); box-shadow: 0 0 0 2px var(--vz-accent-glow); }
+
+/* ── Status / count strip ───────────────────────────────── */
+.mod-results-strip {
+  padding: 8px 18px;
+  font-size: 12px; color: var(--vz-text-faint);
+  border-bottom: 1px solid var(--vz-border-light);
+  background: var(--vz-bg);
+}
+
+/* ── Status pills ───────────────────────────────────────── */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700;
+}
+.status-pill--active  { background: var(--vz-success-bg); color: var(--vz-success); }
+.status-pill--banned  { background: var(--vz-danger-bg); color: var(--vz-danger); }
+.status-pill--staff   { background: var(--vz-info-bg); color: var(--vz-info); }
+.status-pill--blocked { background: var(--vz-danger-bg); color: var(--vz-danger); }
+
+/* ── User rows ──────────────────────────────────────────── */
+.mod-user-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--vz-border-light);
+  transition: background 0.15s ease;
+}
+.mod-user-row:last-child { border-bottom: none; }
+.mod-user-row:hover { background: var(--vz-accent-soft); }
+.mod-user-avatar {
+  width: 38px; height: 38px; border-radius: var(--vz-radius-sm);
+  background: var(--vz-accent-soft);
+  border: 1px solid var(--vz-accent-glow);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff;
+  flex-shrink: 0; overflow: hidden;
+}
+.mod-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mod-user-info { flex: 1; min-width: 0; }
+.mod-user-name { font-size: 13px; font-weight: 700; color: var(--vz-text); text-decoration: none; }
+.mod-user-name:hover { color: var(--vz-accent); text-decoration: none; }
+.mod-user-meta { font-size: 11px; color: var(--vz-text-faint); margin-top: 2px; }
+
+.mod-user-actions {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-left: auto;
+}
+.mod-ban-input, .mod-ban-select {
+  padding: 6px 10px;
+  border: 1px solid var(--vz-border);
+  border-radius: 999px;
+  font-size: 11px;
+  background: var(--vz-surface);
+  color: var(--vz-text);
+}
+.mod-ban-input { min-width: 160px; }
+
+/* ── Blocked post rows ──────────────────────────────────── */
+.mod-post-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--vz-border-light);
+  border-left: 3px solid var(--vz-danger);
+  transition: background 0.15s ease;
+}
+.mod-post-row:last-child { border-bottom: none; }
+.mod-post-row:hover { background: var(--vz-accent-soft); }
+.mod-post-body { flex: 1; min-width: 0; }
+.mod-post-title {
+  font-size: 13px; font-weight: 600; color: var(--vz-text);
+  text-decoration: none; display: block; margin-bottom: 4px;
+}
+.mod-post-title:hover { color: var(--vz-accent); }
+.mod-post-meta { font-size: 11px; color: var(--vz-text-faint); }
+.mod-post-meta a { color: inherit; text-decoration: none; }
+.mod-post-meta a:hover { color: var(--vz-accent); }
+
+/* ── Empty state ────────────────────────────────────────── */
+.mod-empty {
+  padding: 48px 20px; text-align: center;
+  color: var(--vz-text-faint); font-size: 13px;
+}
+.mod-empty i { font-size: 28px; margin-bottom: 10px; display: block; opacity: .5; }
+.mod-empty p { margin: 5px 0 0; color: var(--vz-text-muted); font-size: 12px; }
+
+/* ── Pagination ─────────────────────────────────────────── */
+.mod-pagination {
+  display: flex; justify-content: center; gap: 4px;
+  padding: 16px 18px;
+  border-top: 1px solid var(--vz-border-light);
+  background: var(--vz-surface);
+  flex-wrap: wrap;
+}
+.mod-pagination a, .mod-pagination span {
+  padding: 6px 14px; border: 1px solid var(--vz-border);
+  border-radius: 999px; font-size: 12px; font-weight: 600;
+  text-decoration: none; color: var(--vz-text-muted);
+  background: var(--vz-surface); transition: all .15s;
+}
+.mod-pagination a:hover { border-color: var(--vz-accent); color: var(--vz-accent); }
+.mod-pagination .current { background: var(--vz-accent); color: #fff; border-color: var(--vz-accent); }
+
+/* ── Warning / info strip ───────────────────────────────── */
+.mod-warning-strip {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--vz-warning-bg); border-left: 3px solid #f59e0b;
+  padding: 12px 18px; font-size: 13px; color: var(--vz-warning); line-height: 1.5;
+}
+.mod-warning-strip i { flex-shrink: 0; margin-top: 1px; color: var(--vz-warning); }
+
+/* ── Super mod rows (reused from super_mods.html) ───────── */
+.sm-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--vz-border-light);
+  transition: background .15s;
+}
+.sm-row:last-child { border-bottom: none; }
+.sm-row:hover { background: var(--vz-accent-soft); }
+.sm-avatar {
+  width: 38px; height: 38px; border-radius: var(--vz-radius-sm);
+  background: var(--vz-accent-soft); border: 1px solid var(--vz-accent-glow);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff;
+  flex-shrink: 0; overflow: hidden;
+}
+.sm-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.sm-info { flex: 1; min-width: 0; }
+.sm-name { font-size: 13px; font-weight: 700; color: var(--vz-text); text-decoration: none; display: block; }
+.sm-name:hover { color: var(--vz-accent); }
+.sm-meta { font-size: 11px; color: var(--vz-text-faint); margin-top: 2px; }
+
+/* ── Appeal form ───────────────────────────────────────── */
+.mod-appeal-form { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.mod-field label {
+  display: block; font-size: 12px; font-weight: 700; color: var(--vz-text);
+  margin-bottom: 6px;
+}
+.mod-field textarea,
+.mod-field input {
+  width: 100%; border: 1px solid var(--vz-border); border-radius: var(--vz-radius-sm);
+  padding: 10px 12px; font-size: 13px; font-family: var(--vz-font);
+  background: var(--vz-surface); color: var(--vz-text);
+}
+.mod-field textarea:focus,
+.mod-field input:focus { outline: none; border-color: var(--vz-accent); }
+.mod-field-hint { font-size: 11px; color: var(--vz-text-faint); margin-top: 6px; }
+.mod-appeal-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.mod-btn--ghost {
+  background: var(--vz-surface); border: 1px solid var(--vz-border);
+  color: var(--vz-text-muted);
+}
+.mod-btn--ghost:hover { border-color: var(--vz-accent); color: var(--vz-accent); }
+
+@media (max-width: 520px) {
+  .mod-nav a .label { display: none; }
+  .mod-nav a { padding: 8px 10px; }
+  .mod-report-top { padding: 8px 14px 5px; }
+  .mod-report-body { padding: 0 14px 8px; }
+  .mod-report-actions { padding: 7px 14px 10px; }
+  .mod-user-row, .mod-post-row, .mod-log-row, .sm-row { padding-left: 14px; padding-right: 14px; }
+}

@@ -1,0 +1,176 @@
+{% load filter %}
+{% load static %}
+{% load humanize %}
+{# REPLIES_INITIAL must match views.py:load_replies INITIAL constant (= 3) #}
+{% with next_depth=depth|add:1 %}
+
+<div class="comment{% if comment.reply_to %} comment--reply{% endif %}{% if depth == 0 and comment.replies.count > 1 %} comment--collapsed{% endif %}"
+     id="comment-{{comment.id}}"
+     data-depth="{{ depth }}"
+     data-ts="{{ comment.created_at|date:'U' }}"
+     data-likes="{{ comment.total_likes }}">
+
+  <div class="comment-inner">
+
+    <!-- Gutter: avatar + vertical rail. Entire column collapses/expands thread. -->
+    <div class="c-gutter{% if comment.replies.count %} c-gutter--clickable{% endif %}"
+         {% if comment.replies.count %}onclick="toggleThread({{comment.id}})" onkeydown="if(event.key==='Enter'||event.key===' ')toggleThread({{comment.id}})" role="button" tabindex="0" aria-expanded="{% if depth == 0 and comment.replies.count > 1 %}false{% else %}true{% endif %}" aria-label="Collapse thread"{% endif %}>
+      <span class="c-avatar c-avatar--d{{depth}}{% if comment.is_anon %} c-avatar--anon{% endif %}"{% if not comment.is_anon and not comment.user.profile.avatar %} style="background:{{comment.user.username|avatar_color}}"{% endif %}>
+        {% if comment.is_anon %}?
+        {% elif comment.user.profile.avatar %}<img src="{{comment.user.profile.avatar.url}}" alt="{{comment.user.username}}" loading="lazy" />
+        {% else %}{{comment.user.username|first|upper}}
+        {% endif %}
+      </span>
+      {% if comment.replies.count %}<div class="c-rail"></div>{% endif %}
+    </div>
+
+    <!-- Content column -->
+    <div class="c-col" id="main-comment-row-{{comment.id}}">
+
+      <div class="c-header">
+        <div class="c-byline">
+          {% if comment.is_anon %}
+            <span class="c-author">Anonymous</span>
+          {% else %}
+            <a href="/{{comment.user.username}}" class="c-author">{{comment.user.username}}</a>
+            {% if comment.user.is_staff %}<span class="c-mod">MOD</span>{% endif %}
+            {% if comment.user == post.author %}<span class="c-op">OP</span>{% endif %}
+          {% endif %}
+          {% if comment.reply_to %}
+            <span class="c-replying-to">
+              <i class="fa-solid fa-corner-up-left"></i>
+              <a href="#comment-{{comment.reply_to_id}}" onclick="event.preventDefault(); highlightParentComment({{comment.reply_to_id}})">
+                {% if comment.reply_to.is_anon %}Anonymous{% else %}{{comment.reply_to.user.username}}{% endif %}
+              </a>
+            </span>
+          {% endif %}
+          <time class="c-time" datetime="{{ comment.created_at|date:'c' }}" title="{{ comment.created_at|date:'N j, Y, g:i a' }}">{{comment.created_at|naturaltime}}</time>
+        </div>
+        {% if request.user == comment.user or request.user.is_staff %}
+        <div class="dropdown">
+          <button onclick="toggleCommentMenu({{comment.id}})" class="dropbtn" aria-label="Comment options"><i class="fa-solid fa-ellipsis"></i></button>
+          <div id="comment-menu-{{comment.id}}" class="dropdown-content" style="display:none;">
+            {% if request.user == comment.user %}
+            <button type="button" class="vz-menu-item" onclick="editComment({{comment.id}}, {{post.id}})"><i class="fa-solid fa-pen"></i> Edit</button>
+            {% endif %}
+            <button type="button" class="vz-menu-item vz-menu-delete" onclick="deleteComment({{comment.id}}, {{post.id}})"><i class="fa-solid fa-trash"></i> Delete</button>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="c-text">{{comment.body|safe_for_tags|convert_ytframe|convert_links_except_src|safe}}</div>
+
+      {% if comment.image %}
+      <div class="c-img-wrap">
+        <img src="{{comment.image.url}}" alt="comment image" class="c-img" onclick="openImgModal(this.src)" loading="lazy" />
+      </div>
+      {% elif comment.gif_url %}
+      <div class="c-img-wrap">
+        <img src="{{comment.gif_url}}" alt="GIF" class="c-img" onclick="openImgModal(this.src)" loading="lazy" />
+      </div>
+      {% endif %}
+
+      <div class="c-actions">
+        {% if request.user.is_authenticated %}
+          <button class="c-btn{% if comment.id in user_likes %} c-btn--liked{% endif %}"
+                  onclick="likeComment(this, '{{ csrf_token }}')"
+                  data-comment-id="{{ comment.id }}" data-post-id="{{ post.id }}"
+                  aria-label="Upvote">
+            <i class="fa-solid fa-thumbs-up"></i>
+            <span class="c-like-ct"{% if not comment.total_likes %} style="display:none"{% endif %}>{{comment.total_likes}}</span>
+          </button>
+          <button class="c-btn{% if comment.id in user_dislikes %} c-btn--disliked{% endif %}"
+                  onclick="dislikeComment(this, '{{ csrf_token }}')"
+                  data-comment-id="{{ comment.id }}" data-post-id="{{ post.id }}"
+                  aria-label="Downvote">
+            <i class="fa-solid fa-thumbs-down"></i>
+            <span class="c-dislike-ct"{% if not comment.total_dislikes %} style="display:none"{% endif %}>{{comment.total_dislikes}}</span>
+          </button>
+          <button class="c-btn"
+                  onclick="toggleReplyForm({{comment.id}}, '{% if comment.is_anon %}Anonymous{% else %}{{comment.user.username}}{% endif %}')"
+                  aria-label="Reply to this comment">
+            <i class="fa-solid fa-reply"></i> Reply
+          </button>
+          <button class="c-btn c-btn--report" onclick="reportComment({{comment.id}})" aria-label="Report">
+            <i class="fa-regular fa-flag"></i>
+          </button>
+        {% else %}
+          {% if comment.total_likes %}<span class="c-stat"><i class="fa-solid fa-thumbs-up"></i> {{comment.total_likes}}</span>{% endif %}
+          {% if comment.total_dislikes %}<span class="c-stat"><i class="fa-solid fa-thumbs-down"></i> {{comment.total_dislikes}}</span>{% endif %}
+          {% if comment.replies.count %}<span class="c-stat"><i class="fa-solid fa-reply"></i> {{comment.replies.count}}</span>{% endif %}
+        {% endif %}
+      </div>
+
+      <!-- Inline reply form -->
+      <div id="reply-form-{{comment.id}}" class="c-reply-form" style="display:none;">
+        <form action="{% url 'posts:make_comment' post.id post.slug %}" method="post" enctype="multipart/form-data"
+              onsubmit="return syncReplyEditor(this, {{comment.id}})">
+          {% csrf_token %}
+          <input type="hidden" name="reply_to" value="{{comment.id}}" />
+          <div class="compose-toolbar compose-toolbar--sm">
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="formatReply({{comment.id}}, 'bold')" title="Bold"><i class="fa-solid fa-bold"></i></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="formatReply({{comment.id}}, 'italic')" title="Italic"><i class="fa-solid fa-italic"></i></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="insertReplyLink({{comment.id}})" title="Insert link"><i class="fa-solid fa-link"></i></button>
+            <label class="fmt-btn" title="Attach image" style="cursor:pointer;">
+              <i class="fa-solid fa-image"></i>
+              <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none"
+                     onchange="previewReplyImg(this, {{comment.id}})" />
+            </label>
+            <button type="button" class="fmt-btn fmt-btn--gif" onmousedown="event.preventDefault()" onclick="openGifPicker({{comment.id}})" title="Search GIFs">GIF</button>
+          </div>
+          <div class="compose-editor compose-editor--sm"
+               contenteditable="true"
+               id="reply-editor-{{comment.id}}"
+               data-placeholder="Reply to {% if comment.is_anon %}Anonymous{% else %}{{comment.user.username}}{% endif %}…"></div>
+          <textarea name="body" id="reply-body-{{comment.id}}" style="display:none"></textarea>
+          <div class="c-attach-row">
+            <span class="c-attach-preview" id="attach-preview-{{comment.id}}"></span>
+          </div>
+          <div class="c-reply-footer">
+            {% if request.user.is_authenticated %}
+            <label class="anon-check"><input type="checkbox" name="is_anon" /> Post anonymously</label>
+            {% endif %}
+            <div class="c-reply-btns">
+              <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-paper-plane"></i> Reply</button>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="toggleReplyForm({{comment.id}})">Cancel</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+    </div><!-- /c-col -->
+  </div><!-- /comment-inner -->
+
+  <!-- ── Nested replies ── -->
+  {% if comment.replies.count %}
+  <div class="c-thread{% if next_depth >= 6 %} c-thread--deep{% endif %}" id="thread-{{comment.id}}">
+
+    {# Show first 3 replies server-side (REPLIES_INITIAL = 3) #}
+    {% for reply in comment.ordered_replies|slice:":3" %}
+      {% include 'posts/includes/comment.html' with comment=reply user_likes=user_likes user_dislikes=user_dislikes depth=next_depth %}
+    {% endfor %}
+
+    {# Load-more button sits inside c-thread so collapse hides it too #}
+    {% if comment.replies.count > 3 %}
+    <button class="c-load-more-replies"
+            data-comment-id="{{comment.id}}"
+            data-page="2"
+            data-depth="{{next_depth}}"
+            onclick="loadMoreReplies(this)">
+      <i class="fa-solid fa-angles-down"></i>
+      {{comment.replies.count|add:"-3"}} more repl{{comment.replies.count|add:"-3"|pluralize:"y,ies"}}
+    </button>
+    {% endif %}
+
+    {# Collapse/fold stub — last child inside c-thread for proper indentation #}
+    <button type="button" class="c-thread-stub" id="thread-stub-{{comment.id}}" onclick="expandThread({{comment.id}})" data-total="{{comment.replies.count}}">
+      <i class="fa-solid fa-comment-dots"></i>
+      <span class="c-stub-label">{% with remaining=comment.replies.count|add:"-1" %}{% if remaining > 0 %}{{remaining}} more repl{{remaining|pluralize:"y,ies"}}{% else %}1 reply{% endif %}{% endwith %}</span>
+    </button>
+
+  </div>
+  {% endif %}
+
+</div>
+{% endwith %}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load static %}
+{% load socialaccount %}
+
+{% block title %}Log in — WhatsNaija{% endblock %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/auth.css' %}" />
+{% endblock link %}
+
+{% block content %}
+<div class="auth-page">
+
+  <!-- ── Left: hero ── -->
+  <div class="auth-hero">
+    <div class="hero-content">
+      <div class="hero-logo">
+        <img src="{% static 'images/icon.png' %}" alt="WhatsNaija logo">
+      </div>
+      <h1>See what's happening</h1>
+      <p>Join WhatsNaija to discover stages, share your thoughts, and connect with people who share your interests.</p>
+      <div class="hero-features">
+        <div class="feature">
+          <i class="fa-solid fa-users"></i>
+          <span>Join stages called Stages</span>
+        </div>
+        <div class="feature">
+          <i class="fa-solid fa-comment-dots"></i>
+          <span>Engage in real conversations</span>
+        </div>
+        <div class="feature">
+          <i class="fa-solid fa-fire-flame-curved"></i>
+          <span>Discover trending topics</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Right: form ── -->
+  <div class="auth-form-section">
+    <div class="auth-card">
+
+      <div class="auth-header">
+        <h2>Welcome back</h2>
+        <p>Log in to your WhatsNaija account</p>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+        <div class="form-alert {% if 'error' in message.tags %}alert-error{% else %}alert-success{% endif %}" style="margin-bottom:14px;">
+          <i class="fa-solid {% if 'error' in message.tags %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+          <p>{{ message }}</p>
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <form class="auth-form" method="POST" action="{% url 'users:login' %}">
+        {% csrf_token %}
+
+        {% if request.GET.next %}
+          <input type="hidden" name="next" value="{{ request.GET.next }}">
+        {% endif %}
+
+        <div class="form-group">
+          <label for="id_username">Username</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-user input-icon"></i>
+            <input
+              type="text"
+              id="id_username"
+              name="username"
+              placeholder="Enter your username"
+              autocomplete="username"
+              autofocus
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_password">Password</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-lock input-icon"></i>
+            <input
+              type="password"
+              id="id_password"
+              name="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+            />
+            <button type="button" class="pw-toggle" aria-label="Show/hide password" onclick="togglePw('id_password', this)">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-options">
+          <label class="checkbox-label">
+            <input type="checkbox" name="remember">
+            <span>Remember me</span>
+          </label>
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn-submit">
+          Log in
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <div class="social-login">
+        <a href="{% provider_login_url 'google' %}" class="btn-social btn-google">
+          <i class="fa-brands fa-google"></i>
+          Continue with Google
+        </a>
+      </div>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="{% url 'users:register' %}">Sign up free</a>
+      </div>
+    </div>
+
+    <div class="auth-links">
+      <a href="{% url 'rules' %}">Rules</a>
+      <a href="{% url 'terms' %}">Terms</a>
+      <span>&copy; {% now "Y" %} WhatsNaija</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function togglePw(inputId, btn) {
+  var inp = document.getElementById(inputId);
+  var icon = btn.querySelector('i');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.className = 'fa-regular fa-eye-slash';
+  } else {
+    inp.type = 'password';
+    icon.className = 'fa-regular fa-eye';
+  }
+}
+</script>
+{% endblock content %}

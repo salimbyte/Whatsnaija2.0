@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% load static %}
+{% load socialaccount %}
+
+{% block title %}Sign up — WhatsNaija{% endblock %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/auth.css' %}" />
+{% endblock link %}
+
+{% block content %}
+<div class="auth-page">
+
+  <!-- ── Left: hero ── -->
+  <div class="auth-hero">
+    <div class="hero-content">
+      <div class="hero-logo">
+        <img src="{% static 'images/icon.png' %}" alt="WhatsNaija logo">
+      </div>
+      <h1>Join the conversation</h1>
+      <p>Create your account and become part of a community where your voice matters.</p>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-number">10K+</span>
+          <span class="stat-label">Active users</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">500+</span>
+          <span class="stat-label">stages</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">1M+</span>
+          <span class="stat-label">Posts shared</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Right: form ── -->
+  <div class="auth-form-section">
+    <div class="auth-card">
+
+      <div class="auth-header">
+        <h2>Create your account</h2>
+        <p>Quick and free — takes under a minute</p>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+        <div class="form-alert {% if 'error' in message.tags %}alert-error{% else %}alert-success{% endif %}" style="margin-bottom:14px;">
+          <i class="fa-solid {% if 'error' in message.tags %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+          <p>{{ message }}</p>
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <form class="auth-form" method="POST" action="{% url 'users:register' %}">
+        {% csrf_token %}
+
+        <!-- Name row -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="id_first_name">First name</label>
+            <input
+              type="text"
+              id="id_first_name"
+              name="first_name"
+              placeholder="John"
+              value="{{ form.first_name.value|default:'' }}"
+              autocomplete="given-name"
+              autofocus
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="id_last_name">Last name</label>
+            <input
+              type="text"
+              id="id_last_name"
+              name="last_name"
+              placeholder="Doe"
+              value="{{ form.last_name.value|default:'' }}"
+              autocomplete="family-name"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label for="id_email">Email</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-envelope input-icon"></i>
+            <input
+              type="email"
+              id="id_email"
+              name="email"
+              placeholder="you@example.com"
+              value="{{ form.email.value|default:'' }}"
+              autocomplete="email"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Username -->
+        <div class="form-group">
+          <label for="id_username">Username</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-at input-icon"></i>
+            <input
+              type="text"
+              id="id_username"
+              name="username"
+              placeholder="yourhandle"
+              value="{{ form.username.value|default:'' }}"
+              autocomplete="username"
+              minlength="3"
+              maxlength="30"
+              required
+            />
+          </div>
+          <span class="form-hint">3–30 characters. Letters, digits and @/./+/-/_ only</span>
+          <span class="username-status" id="usernameStatus" aria-live="polite"></span>
+          <div class="username-suggestions" id="usernameSuggestions" aria-live="polite"></div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label for="id_password1">Password</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-lock input-icon"></i>
+            <input
+              type="password"
+              id="id_password1"
+              name="password1"
+              placeholder="Create a password"
+              autocomplete="new-password"
+              required
+            />
+            <button type="button" class="pw-toggle" aria-label="Show/hide password" onclick="togglePw('id_password1', this)">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+          <span class="form-hint">At least 8 characters</span>
+        </div>
+
+        <!-- Confirm password -->
+        <div class="form-group">
+          <label for="id_password2">Confirm password</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-lock input-icon"></i>
+            <input
+              type="password"
+              id="id_password2"
+              name="password2"
+              placeholder="Repeat your password"
+              autocomplete="new-password"
+              required
+            />
+            <button type="button" class="pw-toggle" aria-label="Show/hide password" onclick="togglePw('id_password2', this)">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Terms -->
+        <p class="form-terms">
+          By signing up you agree to our
+          <a href="{% url 'terms' %}">Terms of Service</a> and
+          <a href="{% url 'rules' %}">Community Rules</a>.
+        </p>
+
+        <button type="submit" class="btn-submit">
+          Create account
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <div class="social-login">
+        <a href="{% provider_login_url 'google' %}" class="btn-social btn-google">
+          <i class="fa-brands fa-google"></i>
+          Sign up with Google
+        </a>
+      </div>
+
+      <div class="auth-footer">
+        Already have an account? <a href="{% url 'users:login' %}">Log in</a>
+      </div>
+    </div>
+
+    <div class="auth-links">
+      <a href="{% url 'rules' %}">Rules</a>
+      <a href="{% url 'terms' %}">Terms</a>
+      <span>&copy; {% now "Y" %} WhatsNaija</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function togglePw(inputId, btn) {
+  var inp = document.getElementById(inputId);
+  var icon = btn.querySelector('i');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.className = 'fa-regular fa-eye-slash';
+  } else {
+    inp.type = 'password';
+    icon.className = 'fa-regular fa-eye';
+  }
+}
+
+(function () {
+  var input = document.getElementById('id_username');
+  var status = document.getElementById('usernameStatus');
+  var suggestionsBox = document.getElementById('usernameSuggestions');
+  if (!input || !status || !suggestionsBox) return;
+
+  var debounceId = null;
+  var controller = null;
+  var lastValue = '';
+
+  function setState(state, text) {
+    status.textContent = text || '';
+    status.classList.remove('is-checking', 'is-available', 'is-unavailable');
+    input.classList.remove('is-valid', 'is-invalid');
+    suggestionsBox.classList.remove('show');
+    suggestionsBox.innerHTML = '';
+    if (state === 'checking') {
+      status.classList.add('is-checking');
+    } else if (state === 'available') {
+      status.classList.add('is-available');
+      input.classList.add('is-valid');
+    } else if (state === 'unavailable') {
+      status.classList.add('is-unavailable');
+      input.classList.add('is-invalid');
+    }
+  }
+
+  function localValidate(value) {
+    if (!value) {
+      setState('', '');
+      return false;
+    }
+    if (value.length < 3) {
+      setState('unavailable', 'Must be at least 3 characters');
+      return false;
+    }
+    if (value.length > 30) {
+      setState('unavailable', 'Must be 30 characters or fewer');
+      return false;
+    }
+    if (!/^[\w.@+-]+$/.test(value)) {
+      setState('unavailable', 'Only letters, digits and @/./+/-/_');
+      return false;
+    }
+    return true;
+  }
+
+  function renderSuggestions(list) {
+    suggestionsBox.innerHTML = '';
+    if (!list || !list.length) {
+      suggestionsBox.classList.remove('show');
+      return;
+    }
+    suggestionsBox.classList.add('show');
+    list.forEach(function (name) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'username-suggestion';
+      btn.textContent = name;
+      btn.addEventListener('click', function () {
+        input.value = name;
+        checkAvailability(name);
+        input.focus();
+      });
+      suggestionsBox.appendChild(btn);
+    });
+  }
+
+  function checkAvailability(value) {
+    if (!localValidate(value)) return;
+    if (value === lastValue) return;
+    lastValue = value;
+
+    if (controller) controller.abort();
+    controller = new AbortController();
+    setState('checking', 'Checking availability…');
+
+    fetch("{% url 'users:username_check' %}?username=" + encodeURIComponent(value), {
+      method: 'GET',
+      signal: controller.signal,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.available) {
+          setState('available', 'Username is available');
+          renderSuggestions([]);
+        } else {
+          if (data.reason === 'taken') {
+            setState('unavailable', 'That username is taken');
+            renderSuggestions(data.suggestions || []);
+          } else if (data.reason === 'reserved') {
+            setState('unavailable', 'That username is reserved');
+            renderSuggestions(data.suggestions || []);
+          } else if (data.reason === 'invalid') {
+            setState('unavailable', 'Only letters, digits and @/./+/-/_');
+            renderSuggestions([]);
+          } else if (data.reason === 'too_short') {
+            setState('unavailable', 'Must be at least 3 characters');
+            renderSuggestions([]);
+          } else if (data.reason === 'too_long') {
+            setState('unavailable', 'Must be 30 characters or fewer');
+            renderSuggestions([]);
+          } else {
+            setState('unavailable', 'Not available');
+            renderSuggestions(data.suggestions || []);
+          }
+        }
+      })
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        setState('unavailable', 'Unable to check right now');
+      });
+  }
+
+  input.addEventListener('input', function () {
+    var value = input.value.trim();
+    if (debounceId) clearTimeout(debounceId);
+    debounceId = setTimeout(function () {
+      checkAvailability(value);
+    }, 250);
+  });
+
+  // If form reloads with a prefilled username, check it.
+  if (input.value) {
+    checkAvailability(input.value.trim());
+  }
+})();
+</script>
+{% endblock content %}

@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+{% load filter %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+<link rel="stylesheet" href="{% static 'style/search.css' %}" />
+{% endblock link %}
+
+{% block title %}{% if query %}Search: {{ query }}{% else %}Search{% endif %} — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="content-wrap">
+
+    <!-- ══ Main Column ══════════════════════════════════ -->
+    <div class="main-col">
+
+      <!-- ── Single unified search card ────────────── -->
+      <div class="search-card">
+
+        <!-- Form -->
+        <form method="get" action="{% url 'posts:search' %}" id="searchForm" autocomplete="off">
+          <div class="search-bar-row">
+            <div class="search-input-wrap">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input
+                type="text"
+                name="q"
+                id="searchInput"
+                class="search-input"
+                value="{{ query }}"
+                placeholder="Search posts, users, stages…"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              {% if query %}
+              <button type="button" class="search-clear" id="searchClear" title="Clear">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+              {% endif %}
+            </div>
+            <button type="submit" class="search-submit">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <span>Search</span>
+            </button>
+          </div>
+          {% if not query %}
+          <p class="search-kbd-hint">Press <kbd>/</kbd> to focus</p>
+          {% endif %}
+        </form>
+
+        {% if not query %}
+        <!-- ── Discovery: recent + suggested ─────── -->
+        <div class="search-discovery" id="searchDiscovery">
+
+          <div id="recentSection" style="display:none">
+            <div class="discovery-label">Recent searches</div>
+            <div class="pill-row" id="recentPills"></div>
+          </div>
+
+          <div class="discovery-label">Try searching for</div>
+          <div class="pill-row">
+            <button class="discovery-pill" type="button" onclick="doSearch('Afrobeats')"><i class="fa-solid fa-music"></i> Afrobeats</button>
+            <button class="discovery-pill" type="button" onclick="doSearch('AFCON')"><i class="fa-solid fa-futbol"></i> AFCON</button>
+            <button class="discovery-pill" type="button" onclick="doSearch('Naira')"><i class="fa-solid fa-money-bill-wave"></i> Naira</button>
+            <button class="discovery-pill" type="button" onclick="doSearch('ASUU')"><i class="fa-solid fa-graduation-cap"></i> ASUU</button>
+            <button class="discovery-pill" type="button" onclick="doSearch('Nollywood')"><i class="fa-solid fa-film"></i> Nollywood</button>
+            <button class="discovery-pill" type="button" onclick="doSearch('CBN')"><i class="fa-solid fa-landmark"></i> CBN</button>
+          </div>
+
+        </div>
+
+        <!-- ── stages to explore ─────── -->
+        {% if top_stages %}
+        <div class="search-explore-section">
+          <div class="search-explore-header">
+            <i class="fa-solid fa-compass"></i> stages to explore
+          </div>
+          <div class="search-explore-grid">
+            {% for stage in top_stages|slice:":8" %}
+            <a href="/s/{{ stage.name }}" class="explore-community-card">
+              <span class="explore-avatar" style="background:{{ stage.name|avatar_color }}">{{ stage.name|avatar_initials }}</span>
+              <span class="explore-name">{% if stage.title %}{{ stage.title }}{% else %}{{ stage.name }}{% endif %}</span>
+              {% if stage.description %}
+              <span class="explore-desc">{{ stage.description|truncatewords:8 }}</span>
+              {% elif stage.title %}
+              <span class="explore-desc">{{ stage.title|truncatewords:8 }}</span>
+              {% endif %}
+              <span class="explore-members">{{ stage.members_count }} member{{ stage.members_count|pluralize }}</span>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- ── Trending posts ─────── -->
+        {% if trending_posts %}
+        <div class="search-explore-section">
+          <div class="search-explore-header">
+            <i class="fa-solid fa-fire"></i> Trending now
+          </div>
+          <div class="search-trending-list">
+            {% for post in trending_posts %}
+            <a href="{% url 'posts:detail' post.slug %}" class="trending-item">
+              <span class="trending-rank">{{ forloop.counter }}</span>
+              <div class="trending-info">
+                <span class="trending-title">{{ post.title|truncatewords:12 }}</span>
+                <span class="trending-meta">{% if post.stage.title %}{{ post.stage.title }}{% else %}{{ post.stage.name }}{% endif %} · {{ post.view_count }} view{{ post.view_count|pluralize }}</span>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% endif %}
+
+        {% if query %}
+        {% with p_count=results.posts|length u_count=results.users|length s_count=results.stages|length %}
+        {% with total_count=p_count|add:u_count|add:s_count %}
+
+        <div class="search-summary">
+          {% if total_count %}
+          <strong>{{ total_count }}</strong> result{{ total_count|pluralize }} for <em>{{ query }}</em>
+          {% else %}
+          No results for <em>{{ query }}</em>
+          {% endif %}
+        </div>
+
+        {% if total_count %}
+        <div class="search-tabs" id="searchTabs">
+          <button class="search-tab active" data-target="all">
+            <i class="fa-solid fa-border-all"></i> All
+            <span class="tab-badge">{{ total_count }}</span>
+          </button>
+          {% if p_count %}
+          <button class="search-tab" data-target="posts">
+            <i class="fa-solid fa-newspaper"></i> Posts
+            <span class="tab-badge">{{ p_count }}</span>
+          </button>
+          {% endif %}
+          {% if s_count %}
+          <button class="search-tab" data-target="stages">
+            <i class="fa-solid fa-layer-group"></i> stages
+            <span class="tab-badge">{{ s_count }}</span>
+          </button>
+          {% endif %}
+          {% if u_count %}
+          <button class="search-tab" data-target="users">
+            <i class="fa-solid fa-users"></i> Users
+            <span class="tab-badge">{{ u_count }}</span>
+          </button>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% endwith %}
+        {% endwith %}
+        {% endif %}
+
+      </div><!-- /.search-card -->
+
+      {% if query %}
+      {% with p_count=results.posts|length u_count=results.users|length s_count=results.stages|length %}
+      {% with total_count=p_count|add:u_count|add:s_count %}
+
+      {% if total_count %}
+      <div id="searchResults">
+
+        <!-- stages -->
+        {% if results.stages %}
+        <div class="result-section" data-section="stages">
+          <div class="result-section-header">
+            <i class="fa-solid fa-layer-group"></i>
+            stages
+            <span class="section-count">{{ s_count }}</span>
+          </div>
+          <div class="post-list">
+            {% for stage in results.stages %}
+            <article class="post-row">
+              <div class="result-user-avatar" style="background:{{ stage.name|avatar_color }}; border-radius: 10px;">
+                {{ stage.name|avatar_initials }}
+              </div>
+              <div class="post-main">
+                <div class="post-title-line">
+                  <a href="/s/{{ stage.name }}" class="post-title result-name">{% if stage.title %}{{ stage.title }}{% else %}{{ stage.name }}{% endif %}</a>
+                </div>
+                {% if stage.description %}
+                <p class="result-user-name">{{ stage.description|truncatewords:15 }}</p>
+                {% endif %}
+                <div class="post-meta">
+                  <span class="meta-time"><i class="fa-solid fa-link"></i> /s/{{ stage.name }}</span>
+                  {% if stage.members_count %}
+                  <span class="meta-sep">·</span>
+                  <span><i class="fa-solid fa-users"></i> {{ stage.members_count }} member{{ stage.members_count|pluralize }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              <a class="post-row-link" href="/s/{{ stage.name }}" aria-hidden="true" tabindex="-1"></a>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Users -->
+        {% if results.users %}
+        <div class="result-section" data-section="users">
+          <div class="result-section-header">
+            <i class="fa-solid fa-users"></i>
+            Users
+            <span class="section-count">{{ u_count }}</span>
+          </div>
+          <div class="post-list">
+            {% for u in results.users %}
+            <article class="post-row">
+              <div class="result-user-avatar">
+                {% if u.profile.avatar %}
+                <img src="{{ u.profile.avatar.url }}" alt="{{ u.username }}" />
+                {% else %}
+                {{ u.username|first|upper }}
+                {% endif %}
+              </div>
+              <div class="post-main">
+                <div class="post-title-line">
+                  <a href="/{{ u.username }}/" class="post-title result-name">{{ u.username }}</a>
+                  {% if u.is_staff %}<span class="meta-mod-chip">MOD</span>{% endif %}
+                </div>
+                {% if u.first_name or u.last_name %}
+                <p class="result-user-name">{{ u.first_name }} {{ u.last_name }}</p>
+                {% endif %}
+                <div class="post-meta">
+                  <span class="meta-time"><i class="fa-solid fa-calendar"></i> Joined {{ u.date_joined|custom_timesince }}</span>
+                  {% if u.profile.bio %}
+                  <span class="meta-sep">·</span>
+                  <span>{{ u.profile.bio|truncatewords:10 }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              <a class="post-row-link" href="/{{ u.username }}/" aria-hidden="true" tabindex="-1"></a>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Posts -->
+        {% if results.posts %}
+        <div class="result-section" data-section="posts">
+          <div class="result-section-header">
+            <i class="fa-solid fa-newspaper"></i>
+            Posts
+            <span class="section-count">{{ p_count }}</span>
+          </div>
+          <div class="post-list">
+            {% for post in results.posts %}
+            <article class="post-row {% if post.comments.count >= 10 %}post-row--active{% endif %}">
+              {% if post.images.count or post.og_image %}
+              <div class="post-thumb">
+                {% if post.images.count %}
+                <img src="{{ post.images.first.image.url }}" alt="{{ post.title }}" class="thumb-img" />
+                {% else %}
+                <img src="{{ post.og_image }}" alt="{{ post.title }}" class="thumb-img" />
+                {% endif %}
+              </div>
+              {% endif %}
+              <div class="post-main">
+                <div class="post-title-line">
+                  <a href="{% url 'posts:detail' post.slug %}" class="post-title result-name">{{ post.title }}</a>
+                  {% if post.url %}
+                  <a href="{{ post.url }}" class="post-domain-link" target="_blank" rel="noopener" onclick="event.stopPropagation()">{{ post.url|get_domain_from_url }}</a>
+                  {% endif %}
+                </div>
+                {% if post.body %}
+                <p class="post-snippet result-desc">{{ post.body|clean_excerpt:22 }}</p>
+                {% endif %}
+                <div class="post-meta">
+                  <a href="/s/{{ post.stage.name }}" class="stage-tag" onclick="event.stopPropagation()">{% if post.stage.title %}{{ post.stage.title }}{% else %}{{ post.stage.name }}{% endif %}</a>
+                  <span class="meta-sep">·</span>
+                  <a href="{% url 'posts:detail' post.slug %}#comments" class="meta-comments" onclick="event.stopPropagation()">
+                    <i class="fa-regular fa-comment"></i> {{ post.comments.count }}
+                  </a>
+                  <span class="meta-sep">·</span>
+                  <span class="meta-byline">by <a href="/{{ post.author.username }}" onclick="event.stopPropagation()">{{ post.author.username }}</a>{% if post.author.is_staff %} <span class="meta-mod-chip">MOD</span>{% endif %}</span>
+                  <span class="meta-sep">·</span>
+                  <span class="meta-time"><i class="fa-regular fa-clock"></i> {{ post.created_at|custom_timesince }}</span>
+                </div>
+              </div>
+              <a class="post-row-link" href="{% url 'posts:detail' post.slug %}" aria-hidden="true" tabindex="-1"></a>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+      </div><!-- /#searchResults -->
+
+      {% else %}
+      <!-- No results -->
+      <div class="post-list" style="border-radius: 0 0 var(--vz-radius) var(--vz-radius); border-top: none;">
+        <div class="search-empty">
+          <div class="search-empty-icon"><i class="fa-solid fa-magnifying-glass-minus"></i></div>
+          <div class="search-empty-text">
+            <h4>No results for "{{ query }}"</h4>
+            <p>Try different keywords or check your spelling.</p>
+          </div>
+        </div>
+        {% if request.user.is_authenticated %}
+        <div style="padding: 0 20px 16px;">
+          <a href="{% url 'posts:create' %}" class="btn-primary"><i class="fa-solid fa-pen"></i> Start a discussion</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% endwith %}
+      {% endwith %}
+      {% endif %}
+
+    </div><!-- /.main-col -->
+
+    <!-- ══ Sidebar ══════════════════════════════════════ -->
+    <div class="side-col">
+
+      {% include "includes/sidebar_footer.html" %}
+
+    </div><!-- /.side-col -->
+
+  </div>
+</div>
+
+<script>
+(function () {
+  var RECENT_KEY = 'vaze_recent_searches';
+  var MAX_RECENT = 5;
+  var form  = document.getElementById('searchForm');
+  var input = document.getElementById('searchInput');
+
+  /* ── Auto-focus ─────────────────────────────── */
+  if (input) { setTimeout(function () { input.focus(); }, 60); }
+
+  /* ── Clear button ───────────────────────────── */
+  var clearBtn = document.getElementById('searchClear');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function () {
+      input.value = '';
+      form.submit();
+    });
+  }
+
+  /* ── Press / to focus ───────────────────────── */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' &&
+        document.activeElement !== input &&
+        document.activeElement.tagName !== 'INPUT' &&
+        document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      if (input) { input.focus(); input.select(); }
+    }
+  });
+
+  /* ── Helper: submit a search query ─────────── */
+  window.doSearch = function (q) {
+    if (!input || !form) return;
+    input.value = q;
+    saveRecent(q);
+    form.submit();
+  };
+
+  /* ── Recent searches (localStorage) ─────────── */
+  function getRecents() {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch(e) { return []; }
+  }
+
+  function saveRecent(q) {
+    if (!q || q.length < 2) return;
+    /* ignore single-word capitalized terms that look like broken tag names */
+    if (/^[A-Z][a-z]+$/.test(q) && q.length < 15) return;
+    var list = getRecents().filter(function (r) { return r !== q; });
+    list.unshift(q);
+    list = list.slice(0, MAX_RECENT);
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)); } catch(e) {}
+  }
+
+  function removeRecent(q) {
+    var list = getRecents().filter(function (r) { return r !== q; });
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)); } catch(e) {}
+    renderRecents();
+  }
+
+  function esc(s) {
+    return s.replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function renderRecents() {
+    var section   = document.getElementById('recentSection');
+    var container = document.getElementById('recentPills');
+    if (!section || !container) return;
+    var list = getRecents();
+    if (!list.length) { section.style.display = 'none'; return; }
+    section.style.display = '';
+    container.innerHTML = '';
+    list.forEach(function (q) {
+      var pill = document.createElement('button');
+      pill.className = 'discovery-pill';
+      pill.type = 'button';
+      pill.innerHTML =
+        '<i class="fa-solid fa-clock-rotate-left"></i>' + esc(q) +
+        '<button class="pill-remove" type="button" title="Remove">' +
+        '<i class="fa-solid fa-xmark"></i></button>';
+      pill.addEventListener('click', function () { doSearch(q); });
+      pill.querySelector('.pill-remove').addEventListener('click', function (e) {
+        e.stopPropagation();
+        removeRecent(q);
+      });
+      container.appendChild(pill);
+    });
+  }
+
+  /* Save current query on submit */
+  if (form) {
+    form.addEventListener('submit', function () {
+      var q = input ? input.value.trim() : '';
+      if (q.length >= 2) saveRecent(q);
+    });
+  }
+
+  /* Clean stale/broken entries and render recents on page load */
+  if (document.getElementById('recentSection')) {
+    var cleaned = getRecents().filter(function(r) {
+      return r && r.length >= 2 && !/^[A-Z][a-z]+$/.test(r);
+    });
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(cleaned)); } catch(e) {}
+    renderRecents();
+  }
+
+  /* ── JS tabs ─────────────────────────────────── */
+  var tabs     = document.querySelectorAll('.search-tab');
+  var sections = document.querySelectorAll('.result-section');
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var target = this.dataset.target;
+      tabs.forEach(function (t) { t.classList.remove('active'); });
+      this.classList.add('active');
+      if (target === 'all') {
+        sections.forEach(function (s) { s.style.display = ''; });
+      } else {
+        sections.forEach(function (s) {
+          s.style.display = (s.dataset.section === target) ? '' : 'none';
+        });
+      }
+    });
+  });
+
+  /* ── Keyword highlight ───────────────────────── */
+  var queryStr = input ? input.value.trim() : '';
+  if (queryStr.length >= 2) {
+    var words   = queryStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').split(/\s+/).filter(Boolean);
+    var pattern = new RegExp('(' + words.join('|') + ')', 'gi');
+
+    function highlightNode(node) {
+      if (node.nodeType === 3) {
+        var text = node.textContent;
+        if (pattern.test(text)) {
+          var span = document.createElement('span');
+          span.innerHTML = esc(text).replace(pattern, '<mark class="hl">$1</mark>');
+          node.parentNode.replaceChild(span, node);
+        }
+      } else if (node.nodeType === 1 && node.tagName !== 'A' && node.tagName !== 'MARK') {
+        Array.from(node.childNodes).forEach(highlightNode);
+      }
+    }
+
+    document.querySelectorAll('.result-name, .result-desc, .result-title-text').forEach(function (el) {
+      highlightNode(el);
+    });
+  }
+
+  /* ── Row cursor ─────────────────────────────── */
+  document.querySelectorAll('.post-row-link').forEach(function (link) {
+    link.parentElement.style.cursor = 'pointer';
+  });
+})();
+</script>
+{% endblock content %}

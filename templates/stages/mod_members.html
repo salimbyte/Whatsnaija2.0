@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+{% load filter %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+<style>
+.mod-wrap { max-width: 900px; margin: 0 auto; padding: 28px 12px 40px; }
+.mod-header {
+  background: linear-gradient(135deg, #0C4B33 0%, #15805a 100%);
+  border-radius: var(--vz-radius); padding: 20px 28px; margin-bottom: 16px; color: #fff;
+}
+.mod-header h1 { font-size: 18px; font-weight: 800; margin: 0 0 3px; }
+.mod-header p  { font-size: 12px; color: rgba(255,255,255,.7); margin: 0; }
+.mod-nav { display: flex; gap: 0; background: var(--vz-surface);
+  border: 1px solid var(--vz-border); border-radius: var(--vz-radius-sm);
+  overflow: hidden; margin-bottom: 16px; }
+.mod-nav a { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 8px; font-size: 12px; font-weight: 600;
+  color: var(--vz-text-muted); text-decoration: none;
+  border-right: 1px solid var(--vz-border); transition: all .15s; }
+.mod-nav a:last-child { border-right: none; }
+.mod-nav a:hover  { background: var(--vz-accent-soft); color: var(--vz-accent); }
+.mod-nav a.active { background: var(--vz-accent); color: #fff; }
+.mod-nav a .badge { background: #dc2626; color: #fff; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 999px; }
+
+/* Section headers */
+.section-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+  color: var(--vz-text-secondary); margin-bottom: 10px;
+}
+/* Mod row */
+.mod-member-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; background: var(--vz-surface);
+  border: 1px solid var(--vz-border-light); border-radius: var(--vz-radius-sm);
+  margin-bottom: 8px;
+}
+.mod-member-avatar {
+  width: 34px; height: 34px; border-radius: var(--vz-radius-sm);
+  background: var(--vz-accent-soft); display: flex; align-items: center;
+  justify-content: center; font-size: 14px; font-weight: 700;
+  color: #fff; flex-shrink: 0; overflow: hidden;
+}
+.mod-member-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mod-member-info { flex: 1; min-width: 0; }
+.mod-member-name { font-size: 13px; font-weight: 700; color: var(--vz-text);
+  text-decoration: none; display: block; }
+.mod-member-name:hover { color: var(--vz-accent); }
+.mod-member-meta { font-size: 11px; color: var(--vz-text-faint); margin-top: 1px; }
+.owner-badge {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px;
+  background: linear-gradient(135deg, #0C4B33, #1a8055); color: #fff;
+}
+.mod-badge {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px; background: var(--vz-accent-soft);
+  color: var(--vz-accent); border: 1px solid var(--vz-accent-glow);
+}
+.super-badge {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px; background: #fef9c3; color: #854d0e;
+}
+/* Add mod form */
+.add-mod-form {
+  display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+}
+.add-mod-form input {
+  flex: 1; min-width: 180px; padding: 9px 12px;
+  border: 1px solid var(--vz-border); border-radius: var(--vz-radius-sm);
+  font-size: 13px; font-family: var(--vz-font); outline: none;
+  background: var(--vz-surface); color: var(--vz-text);
+}
+.add-mod-form input:focus { border-color: var(--vz-accent); }
+.add-mod-form button {
+  padding: 9px 18px; background: var(--vz-accent); border: none;
+  border-radius: var(--vz-radius-sm); color: #fff; font-size: 13px;
+  font-weight: 700; cursor: pointer; font-family: var(--vz-font); transition: background .15s;
+}
+.add-mod-form button:hover { background: var(--vz-accent-hover); }
+/* Remove btn */
+.remove-btn {
+  padding: 5px 12px; border: 1px solid #fecaca; background: #fff;
+  color: #dc2626; border-radius: var(--vz-radius-sm); font-size: 11px;
+  font-weight: 600; cursor: pointer; font-family: var(--vz-font); transition: all .15s;
+  white-space: nowrap;
+}
+.remove-btn:hover { background: #fef2f2; }
+/* Ban row */
+.ban-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px; background: var(--vz-surface);
+  border: 1px solid var(--vz-border-light); border-radius: var(--vz-radius-sm);
+  margin-bottom: 8px;
+}
+.ban-badge {
+  display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 4px; background: #fef2f2; color: #dc2626;
+  text-transform: uppercase; letter-spacing: .4px; flex-shrink: 0;
+}
+.unban-btn {
+  padding: 5px 12px; border: 1px solid #bbf7d0; background: #fff;
+  color: var(--vz-accent); border-radius: var(--vz-radius-sm); font-size: 11px;
+  font-weight: 600; cursor: pointer; font-family: var(--vz-font); transition: all .15s;
+  white-space: nowrap;
+}
+.unban-btn:hover { background: #f0fdf4; }
+/* Ban form */
+.ban-form { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.ban-form input, .ban-form select {
+  flex: 1; min-width: 140px; padding: 9px 12px;
+  border: 1px solid var(--vz-border); border-radius: var(--vz-radius-sm);
+  font-size: 13px; font-family: var(--vz-font); outline: none;
+  background: var(--vz-surface); color: var(--vz-text);
+}
+.ban-form input:focus, .ban-form select:focus { border-color: #dc2626; }
+.ban-form button {
+  padding: 9px 18px; background: #dc2626; border: none;
+  border-radius: var(--vz-radius-sm); color: #fff; font-size: 13px;
+  font-weight: 700; cursor: pointer; font-family: var(--vz-font); transition: background .15s;
+}
+.ban-form button:hover { background: #b91c1c; }
+.mod-empty { padding: 20px 0; text-align: center; color: var(--vz-text-faint); font-size: 13px; }
+
+
+</style>
+{% endblock link %}
+
+{% block title %}Members: {{ stage.name }} — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="mod-wrap">
+
+  <div class="mod-header">
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.6);margin-bottom:5px;">
+          <i class="fa-solid fa-shield-halved"></i> Stage Moderation — {{ stage.name }}
+    </div>
+    <h1><i class="fa-solid fa-users-gear"></i> Moderators &amp; Bans</h1>
+    <p>Manage who moderates this stage and who's been banned.</p>
+  </div>
+
+  <div class="mod-nav">
+    <a href="{% url 'stages:mod_dashboard' stage.name %}"><i class="fa-solid fa-gauge"></i> <span>Overview</span></a>
+    <a href="{% url 'stages:mod_queue' stage.name %}"><i class="fa-solid fa-flag"></i> <span>Queue</span>
+      {% if pending_count %}<span class="badge">{{ pending_count }}</span>{% endif %}</a>
+    <a href="{% url 'stages:mod_members' stage.name %}" class="active"><i class="fa-solid fa-users-gear"></i> <span>Members</span></a>
+    <a href="{% url 'stages:mod_log' stage.name %}"><i class="fa-solid fa-scroll"></i> <span>Log</span></a>
+    <a href="{% url 'stages:stage_page' stage.name %}"><i class="fa-solid fa-arrow-left"></i> <span>Back</span></a>
+  </div>
+
+  <!-- ── Moderators ──────────────────────── -->
+  <div class="side-box" style="margin-bottom: 14px;">
+    <div class="side-box-title"><i class="fa-solid fa-shield-halved"></i> Moderators</div>
+    <div class="side-box-body" style="padding: 14px 18px;">
+
+      <!-- Stage owner (non-removable) -->
+      {% if stage.admin %}
+      <div class="mod-member-row">
+        <div class="mod-member-avatar" {% if not stage.admin.profile.avatar %}style="background:{{ stage.admin.username|avatar_color }}"{% endif %}>
+          {% if stage.admin.profile.avatar %}
+          <img src="{{ stage.admin.profile.avatar.url }}" alt="{{ stage.admin.username }}" />
+          {% else %}{{ stage.admin.username|first|upper }}{% endif %}
+        </div>
+        <div class="mod-member-info">
+          <a href="/{{ stage.admin.username }}/" class="mod-member-name">{{ stage.admin.username }}</a>
+          <span class="mod-member-meta">Owner · Since {{ stage.created_at|date:"M j, Y" }}</span>
+        </div>
+        <span class="owner-badge"><i class="fa-solid fa-crown"></i> Owner</span>
+      </div>
+      {% endif %}
+
+      <!-- Active stage mods -->
+      {% for mod in mods %}
+      <div class="mod-member-row">
+        <div class="mod-member-avatar" {% if not mod.user.profile.avatar %}style="background:{{ mod.user.username|avatar_color }}"{% endif %}>
+          {% if mod.user.profile.avatar %}
+          <img src="{{ mod.user.profile.avatar.url }}" alt="{{ mod.user.username }}" />
+          {% else %}{{ mod.user.username|first|upper }}{% endif %}
+        </div>
+        <div class="mod-member-info">
+          <a href="/{{ mod.user.username }}/" class="mod-member-name">{{ mod.user.username }}</a>
+          <span class="mod-member-meta">
+            Added by {{ mod.added_by.username|default:"—" }} · {{ mod.created_at|timesince }} ago
+          </span>
+        </div>
+        <span class="mod-badge"><i class="fa-solid fa-shield-halved"></i> Mod</span>
+        {% if can_assign %}
+        <form method="post" action="{% url 'stages:mod_remove_moderator' stage.name mod.id %}" style="margin:0;">
+          {% csrf_token %}
+          <button type="submit" class="remove-btn"
+            onclick="return confirm('Remove {{ mod.user.username }} as moderator?')">
+            Remove
+          </button>
+        </form>
+        {% endif %}
+      </div>
+      {% empty %}
+      {% if not stage.admin %}
+      <div class="mod-empty">No moderators assigned yet.</div>
+      {% endif %}
+      {% endfor %}
+
+      <!-- Add mod form (owner / staff only) -->
+      {% if can_assign %}
+      <form method="post" action="{% url 'stages:mod_add_moderator' stage.name %}" class="add-mod-form" style="margin-top: 16px;">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Username to add as mod" required autocomplete="off" />
+        <button type="submit"><i class="fa-solid fa-user-plus"></i> Add Moderator</button>
+      </form>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- ── Stage Bans ─────────────────────── -->
+  <div class="side-box" style="margin-bottom: 14px;">
+    <div class="side-box-title"><i class="fa-solid fa-ban"></i> Stage Bans</div>
+    <div class="side-box-body" style="padding: 14px 18px;">
+
+      {% for ban in bans %}
+      <div class="ban-row">
+        <div class="mod-member-avatar" {% if not ban.user.profile.avatar %}style="background:{{ ban.user.username|avatar_color }}"{% endif %}>
+          {% if ban.user.profile.avatar %}
+          <img src="{{ ban.user.profile.avatar.url }}" alt="{{ ban.user.username }}" />
+          {% else %}{{ ban.user.username|first|upper }}{% endif %}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <a href="/{{ ban.user.username }}/" style="font-size:13px;font-weight:700;color:var(--vz-text);text-decoration:none;">{{ ban.user.username }}</a>
+          <div style="font-size:11px;color:var(--vz-text-faint);">
+            Banned by {{ ban.banned_by.username|default:"—" }} · {{ ban.created_at|timesince }} ago
+            {% if ban.reason %} · "{{ ban.reason|truncatechars:50 }}"{% endif %}
+            {% if ban.expires_at %} · Ends {{ ban.expires_at|date:"M j, Y H:i" }}{% endif %}
+          </div>
+        </div>
+        <span class="ban-badge"><i class="fa-solid fa-ban"></i> Banned</span>
+        <form method="post" action="{% url 'stages:mod_unban' stage.name ban.id %}" style="margin:0;">
+          {% csrf_token %}
+          <button type="submit" class="unban-btn"
+            onclick="return confirm('Unban {{ ban.user.username }} from {{ stage.name }}?')">
+            Unban
+          </button>
+        </form>
+      </div>
+      {% empty %}
+      <div class="mod-empty"><i class="fa-solid fa-circle-check"></i> No active bans in this stage.</div>
+      {% endfor %}
+
+      <!-- Ban user form -->
+      <form method="post" action="{% url 'stages:mod_ban' stage.name %}" class="ban-form" style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--vz-border-light);">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Username to ban" required autocomplete="off" />
+        <input type="text" name="public_reason" placeholder="Public reason (shown to user)" />
+        <input type="text" name="mod_note" placeholder="Private mod note (optional)" />
+        <select name="ban_duration">
+          <option value="permanent" selected>Ban duration: Permanent (default)</option>
+          <option value="24h">Ban duration: 24 hours</option>
+          <option value="3d">Ban duration: 3 days</option>
+          <option value="7d">Ban duration: 7 days</option>
+        </select>
+        <button type="submit" onclick="return confirm('Ban this user from {{ stage.name }}?')">
+          <i class="fa-solid fa-ban"></i> Stage Ban
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+</div>
+{% endblock content %}

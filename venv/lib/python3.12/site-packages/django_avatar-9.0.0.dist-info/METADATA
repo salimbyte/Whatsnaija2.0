@@ -1,0 +1,70 @@
+Metadata-Version: 2.4
+Name: django-avatar
+Version: 9.0.0
+Summary: A Django app for handling user avatars
+Author-email: Eric Florenzano <floguy@gmail.com>
+Maintainer-email: Johannes Wilm <johannes@fiduswriter.org>
+License: BSD-4-Clause
+Project-URL: homepage, https://github.com/jazzband/django-avatar
+Project-URL: repository, https://github.com/jazzband/django-avatar
+Project-URL: documentation, https://django-avatar.readthedocs.io
+Keywords: avatar,django
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: Framework :: Django
+Classifier: Framework :: Django :: 4.2
+Classifier: Framework :: Django :: 5.0
+Classifier: Framework :: Django :: 5.2
+Classifier: Framework :: Django :: 6.0
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Description-Content-Type: text/x-rst
+License-File: LICENSE.txt
+Requires-Dist: Pillow>=10.0.1
+Requires-Dist: django-appconf>=1.0.5
+Requires-Dist: dnspython>=2.3.0
+Dynamic: license-file
+
+=============
+django-avatar
+=============
+
+.. image:: https://jazzband.co/static/img/badge.png
+   :target: https://jazzband.co/
+   :alt: Jazzband
+
+.. image:: https://img.shields.io/pypi/pyversions/django-avatar.svg
+   :target: https://pypi.org/project/django-avatar/
+   :alt: Supported Python versions
+
+.. image:: https://img.shields.io/pypi/djversions/django-avatar.svg
+   :target: https://pypi.org/project/django-avatar/
+   :alt: Supported Django versions
+
+.. image:: https://github.com/jazzband/django-avatar/actions/workflows/test.yml/badge.svg
+   :target: https://github.com/jazzband/django-avatar/actions/workflows/test.yml
+
+.. image:: https://codecov.io/gh/jazzband/django-avatar/branch/main/graph/badge.svg?token=BO1e4kkgtq
+   :target: https://codecov.io/gh/jazzband/django-avatar
+
+.. image:: https://badge.fury.io/py/django-avatar.svg
+    :target: https://badge.fury.io/py/django-avatar
+    :alt: PyPI badge
+
+.. image:: https://readthedocs.org/projects/django-avatar/badge/?version=latest
+    :target: https://django-avatar.readthedocs.org/en/latest/?badge=latest
+    :alt: Documentation Status
+
+Django-avatar is a reusable application for handling user avatars.  It has the
+ability to default to Gravatar if no avatar is found for a certain user.
+Django-avatar automatically generates thumbnails and stores them to your default
+file storage backend for retrieval later.
+
+For more information see the documentation at https://django-avatar.readthedocs.org/

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load filter %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/post.css' %}" />
+<meta property="og:title" content="{{ post.title }}" />
+<meta property="og:description" content="{{ post.body|striptags|truncatechars:200 }}" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="{{ request.build_absolute_uri }}" />
+{% endblock link %}
+
+{% block title %}{{post.title}}{% endblock title %}
+
+{% block content %}
+{% with comment_count=post.comments.count image_count=post.images.count %}
+<div class="page-wrapper">
+  <div class="content-wrap">
+
+    <!-- Main Column -->
+    <div class="main-col">
+      <article id="post" class="post-card">
+        {% include "posts/includes/post_header.html" %}
+        <div class="post-body-wrap">
+          {% include "posts/includes/post_body.html" %}
+          {% include "posts/includes/post_actions.html" %}
+          {% include "posts/includes/comment_form.html" %}
+          {% include "posts/includes/comments_section.html" %}
+        </div>
+      </article>
+    </div>
+
+    {% include "posts/includes/post_sidebar.html" %}
+
+  </div>
+</div>
+
+{% include "posts/includes/report_modal.html" %}
+{% include "posts/includes/post_scripts.html" %}
+{% include "posts/includes/gif_modal.html" %}
+<script src="/static/scripts/post.js"></script>
+{% endwith %}
+{% endblock content %}

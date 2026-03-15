@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+{% load filter %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/mod.css' %}" />
+{% endblock link %}
+
+{% block title %}Users — WhatsNaija Moderation{% endblock title %}
+
+{% block content %}
+<div class="mod-wrap">
+
+  <div class="mod-page-header">
+    <div class="mod-header-label"><i class="fa-solid fa-shield-halved"></i> Platform Moderation</div>
+    <h1>User Management</h1>
+    <p>Search, review, and act on accounts across WhatsNaija.</p>
+  </div>
+
+  {% include "moderations/_mod_nav.html" %}
+
+  <div class="mod-box" style="margin-top:16px;">
+
+    <!-- Search + count on one row — no separate results strip -->
+    <form method="get" class="mod-search-form" style="align-items:center;">
+      <div class="mod-search-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" name="q" value="{{ q }}" placeholder="Search username or email…"
+          class="mod-search-input" autocomplete="off" />
+      </div>
+      <input type="hidden" name="status" value="{{ status_filter }}" />
+      <button type="submit" class="mod-btn mod-btn--primary mod-btn--sm">
+        <i class="fa-solid fa-magnifying-glass"></i> Search
+      </button>
+      {% if page_obj.paginator.count %}
+      <span style="font-size:12px;color:var(--vz-text-faint);white-space:nowrap;">
+        {{ page_obj.paginator.count }} user{{ page_obj.paginator.count|pluralize }}{% if q %} for &ldquo;{{ q }}&rdquo;{% endif %}
+      </span>
+      {% endif %}
+    </form>
+
+    <!-- Filter tabs -->
+    <div class="mod-filter-wrap">
+      <a href="?status=all{% if q %}&q={{ q }}{% endif %}"
+         class="mod-filter-tab{% if status_filter == 'all' %} active{% endif %}">
+        <i class="fa-solid fa-users"></i> All
+      </a>
+      <a href="?status=active{% if q %}&q={{ q }}{% endif %}"
+         class="mod-filter-tab{% if status_filter == 'active' %} active{% endif %}">
+        <i class="fa-solid fa-circle-check"></i> Active
+      </a>
+      <a href="?status=banned{% if q %}&q={{ q }}{% endif %}"
+         class="mod-filter-tab{% if status_filter == 'banned' %} active{% endif %}">
+        <i class="fa-solid fa-ban"></i> Banned
+      </a>
+      <a href="?status=staff{% if q %}&q={{ q }}{% endif %}"
+         class="mod-filter-tab{% if status_filter == 'staff' %} active{% endif %}">
+        <i class="fa-solid fa-shield-halved"></i> Staff
+      </a>
+    </div>
+
+    {% for u in page_obj %}
+    <div class="mod-user-row">
+      <div class="mod-user-avatar" {% if not u.profile.avatar %}style="background:{{ u.username|avatar_color }}"{% endif %}>
+        {% if u.profile.avatar %}
+          <img src="{{ u.profile.avatar.url }}" alt="{{ u.username }}" />
+        {% else %}
+          {{ u.username|first|upper }}
+        {% endif %}
+      </div>
+      <div class="mod-user-info">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+          <a href="/{{ u.username }}/" class="mod-user-name">{{ u.username }}</a>
+          {# Only flag exceptional states — active is the default, no badge needed #}
+          {% if u.is_superuser %}
+            <span class="status-pill status-pill--staff"><i class="fa-solid fa-crown"></i> Admin</span>
+          {% elif u.is_staff %}
+            <span class="status-pill status-pill--staff"><i class="fa-solid fa-shield-halved"></i> Staff</span>
+          {% elif not u.is_active %}
+            <span class="status-pill status-pill--banned"><i class="fa-solid fa-ban"></i> Banned</span>
+          {% endif %}
+        </div>
+        <div class="mod-user-meta">
+          Joined {{ u.date_joined|date:"M j, Y" }}{% if u.email %} &middot; {{ u.email }}{% endif %}
+          {% if not u.is_active %}
+            {% if u.ban_until %} &middot; Banned until {{ u.ban_until|date:"M j, Y H:i" }}{% else %} &middot; Permanent ban{% endif %}
+          {% endif %}
+        </div>
+      </div>
+      {% if request.user.is_staff and not u.is_staff and not u.is_superuser %}
+      <form method="post" action="{% url 'moderations:toggle_ban' u.id %}" class="mod-user-actions">
+        {% csrf_token %}
+        <input type="hidden" name="next"
+          value="{% url 'moderations:users_list' %}?status={{ status_filter }}{% if q %}&q={{ q }}{% endif %}&page={{ page_obj.number }}" />
+        {% if u.is_active %}
+        <input type="text" name="public_reason" class="mod-ban-input" placeholder="Public reason" />
+        <select name="ban_duration" class="mod-ban-select">
+          <option value="permanent" selected>Permanent</option>
+          <option value="24h">24 hours</option>
+          <option value="3d">3 days</option>
+          <option value="7d">7 days</option>
+        </select>
+        <button type="submit" class="mod-btn mod-btn--danger mod-btn--sm"
+          onclick="return confirm('Ban {{ u.username }} from Vaze?')">
+          <i class="fa-solid fa-user-slash"></i> Ban
+        </button>
+        {% else %}
+        <button type="submit" class="mod-btn mod-btn--success mod-btn--sm"
+          onclick="return confirm('Unban {{ u.username }}?')">
+          <i class="fa-solid fa-user-check"></i> Unban
+        </button>
+        {% endif %}
+      </form>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="mod-empty">
+      <i class="fa-solid fa-users-slash"></i>
+      No users found{% if q %} for &ldquo;{{ q }}&rdquo;{% endif %}.
+      <p>Try adjusting the search or filter.</p>
+    </div>
+    {% endfor %}
+
+    {% if page_obj.has_other_pages %}
+    <div class="mod-pagination">
+      {% if page_obj.has_previous %}
+        <a href="?status={{ status_filter }}&q={{ q }}&page={{ page_obj.previous_page_number }}">&larr; Prev</a>
+      {% endif %}
+      <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?status={{ status_filter }}&q={{ q }}&page={{ page_obj.next_page_number }}">Next &rarr;</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock content %}

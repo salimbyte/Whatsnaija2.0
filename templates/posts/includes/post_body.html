@@ -1,0 +1,69 @@
+{% load filter %}
+{% with image_count=post.images.count %}
+<!-- Post URL bar -->
+{% if post.url %}
+<div class="post-url-bar">
+  <i class="fa-solid fa-link"></i>
+  <a href="{{post.url}}" target="_blank" rel="noopener">{{post.url}}</a>
+</div>
+{% endif %}
+
+<!-- Post body text -->
+{% if post.body %}
+<div class="post-body">
+  {{post.body|safe_post_body|safe}}
+</div>
+{% endif %}
+
+<!-- Post Images -->
+{% if image_count %}
+<div id="post-media">
+  <div class="slideshow-outer">
+
+    {% if image_count > 1 %}
+    <button type="button" class="slide-nav slide-nav--prev" onclick="plusSlides(-1)" aria-label="Previous image">
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+    {% endif %}
+
+    <div class="slideshow-wrap">
+      <div class="slideshow-container">
+        {% for media in post.images.all %}
+        {% if media.image %}
+        <div class="mySlides fade">
+          <img src="{{media.image.url}}" alt="{{ post.title }} — image {{ forloop.counter }}" onclick="zoomIMG(this)"{% if not forloop.first %} loading="lazy"{% endif %} />
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% if image_count > 1 %}
+      <div class="slide-counter" id="slide-counter">1 / {{image_count}}</div>
+      {% endif %}
+    </div>
+
+    {% if image_count > 1 %}
+    <button type="button" class="slide-nav slide-nav--next" onclick="plusSlides(1)" aria-label="Next image">
+      <i class="fa-solid fa-chevron-right"></i>
+    </button>
+    {% endif %}
+
+  </div>
+
+  {% if image_count > 1 %}
+  <div class="dots-row">
+    {% for media in post.images.all %}
+    <span class="dot{% if forloop.first %} active{% endif %}" onclick="currentSlide({{forloop.counter}})">
+      <img src="{{media.image.url}}" alt="" loading="lazy" />
+    </span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Image Modal -->
+  <div id="myModal" class="modal" onclick="zoomOut(this)">
+    <img class="modal-content" id="img01" />
+    <button class="modal-close" onclick="event.stopPropagation(); zoomOut(document.getElementById('myModal'))" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+</div>
+{% endif %}
+{% endwith %}

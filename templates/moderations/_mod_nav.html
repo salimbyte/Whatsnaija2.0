@@ -1,0 +1,25 @@
+<nav class="mod-nav" aria-label="Moderation sections">
+  <a href="{% url 'moderations:dashboard' %}"
+     {% if request.resolver_match.url_name == 'dashboard' %}class="active" aria-current="page"{% endif %}>
+    <i class="fa-solid fa-gauge-high"></i> <span class="label">Overview</span>
+  </a>
+  <a href="{% url 'moderations:report_queue' %}"
+     {% if request.resolver_match.url_name == 'report_queue' %}class="active" aria-current="page"{% endif %}>
+    <i class="fa-solid fa-flag"></i> <span class="label">Reports</span>
+    {% if nav_pending %}<span class="nav-badge">{{ nav_pending }}</span>{% endif %}
+  </a>
+  <a href="{% url 'moderations:blocked_posts' %}"
+     {% if request.resolver_match.url_name == 'blocked_posts' %}class="active" aria-current="page"{% endif %}>
+    <i class="fa-solid fa-ban"></i> <span class="label">Blocked</span>
+  </a>
+  <a href="{% url 'moderations:users_list' %}"
+     {% if request.resolver_match.url_name == 'users_list' %}class="active" aria-current="page"{% endif %}>
+    <i class="fa-solid fa-users"></i> <span class="label">Users</span>
+  </a>
+  {% if request.user.is_staff %}
+  <a href="{% url 'moderations:super_mods' %}"
+     {% if request.resolver_match.url_name == 'super_mods' %}class="active" aria-current="page"{% endif %}>
+    <i class="fa-solid fa-star"></i> <span class="label">Super Mods</span>
+  </a>
+  {% endif %}
+</nav>

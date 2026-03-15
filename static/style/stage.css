@@ -1,0 +1,556 @@
+/* ============================================
+   VAZE — Stage Page
+   Synced with user.css / index.css design system
+   ============================================ */
+
+/* === DESIGN TOKENS === */
+
+
+/* ========================================
+   PAGE LAYOUT
+   ======================================== */
+
+/* ========================================
+   STAGE HERO CARD
+   ======================================== */
+
+.stage-card {
+  background: var(--vz-surface);
+  border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius);
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  margin-bottom: 16px;
+}
+
+.sort-bar--stage {
+  border-top: 1px solid var(--vz-border);
+}
+
+
+
+/* Banner */
+.stage-banner {
+  height: 130px;
+  background: var(--vz-gradient);
+  position: relative;
+  overflow: hidden;
+}
+
+.stage-banner.has-image {
+  background: var(--vz-text);
+}
+
+
+/* Header row */
+.stage-header {
+  display: flex;
+  gap: 18px;
+  padding: 0 22px;
+  padding-top: 14px;
+  margin-top: -28px;
+  position: relative;
+  z-index: 1;
+  background: var(--vz-surface);
+}
+
+.stage-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--vz-radius);
+  overflow: hidden;
+  border: 2px solid var(--vz-surface);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+  background: var(--vz-accent);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stage-avatar span {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.stage-info {
+  flex: 1;
+  min-width: 0;
+
+  padding-bottom: 16px;
+}
+
+.stage-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stage-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--vz-text);
+  letter-spacing: -0.4px;
+  margin: 0;
+}
+
+.stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(234, 179, 8, 0.1);
+  color: #b45309;
+  border: 1px solid rgba(234, 179, 8, 0.2);
+}
+
+.stage-tagline {
+  font-size: 14px;
+  color: var(--vz-text-secondary);
+  margin: 4px 0 0;
+  line-height: 1.4;
+}
+
+.stage-slug-label {
+  font-size: 11px;
+  color: var(--vz-text-faint);
+  font-weight: 500;
+  margin: 2px 0 0;
+  letter-spacing: 0.1px;
+}
+
+.stage-description-inline {
+  font-size: 13px;
+  color: var(--vz-text-muted);
+  margin: 6px 0 0;
+  line-height: 1.55;
+  max-width: 600px;
+}
+
+.stage-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.stage-meta-item {
+  font-size: 12px;
+  color: var(--vz-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stage-meta-item i {
+  font-size: 11px;
+  color: var(--vz-text-faint);
+}
+
+/* Actions */
+.stage-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stage-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--vz-font);
+  border: 1px solid var(--vz-border);
+  background: var(--vz-surface);
+  color: var(--vz-text-secondary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.stage-btn:hover {
+  background: var(--vz-surface-hover);
+  border-color: #ccc;
+}
+
+.stage-btn.primary {
+  background: var(--vz-accent);
+  color: #fff;
+  border-color: var(--vz-accent);
+  font-weight: 700;
+}
+
+.stage-btn.primary:hover {
+  background: var(--vz-accent-hover);
+  border-color: var(--vz-accent-hover);
+  box-shadow: 0 2px 8px var(--vz-accent-strong);
+  text-decoration: none;
+}
+
+.stage-badge--mod {
+  background: var(--vz-accent-glow);
+  color: var(--vz-accent);
+  border-color: var(--vz-accent-strong);
+}
+
+.stage-btn--mod {
+  border-color: transparent;
+  background: transparent;
+  color: var(--vz-text-muted);
+  font-size: 12px;
+}
+
+.stage-btn--mod:hover {
+  background: var(--vz-accent-soft);
+  color: var(--vz-accent);
+  border-color: transparent;
+}
+
+.stage-btn--join {
+  border-color: var(--vz-accent);
+  color: var(--vz-accent);
+  font-weight: 700;
+}
+.stage-btn--join:hover {
+  background: var(--vz-accent);
+  color: #fff;
+}
+.stage-btn--join.joined {
+  background: var(--vz-accent);
+  color: #fff;
+  border-color: var(--vz-accent);
+}
+.stage-btn--join.joined:hover {
+  background: #c0392b;
+  border-color: #c0392b;
+  color: #fff;
+}
+
+.stage-btn--banned {
+  border-color: #fecaca;
+  color: #dc2626;
+  background: #fef2f2;
+  cursor: default;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+/* ── Banned notice banner ── */
+.stage-ban-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--vz-radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #7f1d1d;
+}
+.stage-ban-notice i { color: #dc2626; font-size: 15px; flex-shrink: 0; }
+.stage-ban-notice strong { color: #dc2626; }
+
+/* ── Rules list link ── */
+.rules-list a {
+  text-decoration: underline;
+  color: var(--vz-accent);
+}
+.rules-list a:hover {
+  color: var(--vz-accent-hover);
+}
+
+/* ── Mod Team sidebar ── */
+.mod-team-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--vz-border-light, #e5e0d8);
+}
+.mod-team-row:last-child { border-bottom: none; }
+.mod-team-avatar {
+  width: 30px; height: 30px; border-radius: var(--vz-radius-sm, 6px);
+  background: var(--vz-accent-soft); display: flex; align-items: center;
+  justify-content: center; font-size: 12px; font-weight: 700;
+  color: #fff; flex-shrink: 0; overflow: hidden;
+}
+.mod-team-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mod-team-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.mod-team-name {
+  font-size: 13px; font-weight: 600; color: var(--vz-text, #1a1a1a);
+  text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mod-team-name:hover { color: var(--vz-accent); }
+.mod-team-dm {
+  margin-left: auto; color: var(--vz-text-faint, #9ca3af); font-size: 13px;
+  text-decoration: none; padding: 3px 6px; border-radius: 4px; transition: all .15s;
+  flex-shrink: 0;
+}
+.mod-team-dm:hover { color: var(--vz-accent); background: var(--vz-accent-soft); }
+.owner-pill {
+  display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 999px;
+  background: var(--vz-gradient); color: #fff; white-space: nowrap;
+  flex-shrink: 0;
+}
+.mod-pill {
+  display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 999px;
+  background: var(--vz-accent-soft); color: var(--vz-accent);
+  border: 1px solid var(--vz-accent-glow, var(--vz-accent-strong)); white-space: nowrap;
+  flex-shrink: 0;
+}
+
+
+/* ========================================
+   SORT BAR
+   ======================================== */
+
+/* ========================================
+   POST LIST
+   ======================================== */
+
+/* --- Thumbnail --- */
+
+
+.post-points {
+  font-weight: 700;
+  color: var(--vz-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.post-points i {
+  font-size: 11px;
+  color: var(--vz-accent);
+  opacity: 0.7;
+}
+
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+
+/* ========================================
+   PAGINATION
+   ======================================== */
+
+
+/* ========================================
+   SIDEBAR
+   ======================================== */
+
+.side-box-muted {
+  background: var(--vz-surface-hover);
+}
+
+
+.stage-description {
+  font-size: 13px;
+  color: var(--vz-text-secondary);
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+
+.stage-description.muted {
+  color: var(--vz-text-faint);
+  font-style: italic;
+}
+
+/* Info list */
+
+
+.sidebar-info-item a {
+  color: var(--vz-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.sidebar-info-item a:hover {
+  text-decoration: underline;
+}
+
+/* Rules */
+.rules-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rules-list li {
+  font-size: 13px;
+  color: var(--vz-text-secondary);
+  line-height: 1.45;
+}
+
+.rules-list a {
+  color: var(--vz-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.rules-list a:hover {
+  text-decoration: underline;
+}
+
+
+/* Side footer */
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 860px) {
+}
+
+@media (max-width: 640px) {
+  .stage-banner {
+    height: 100px;
+  }
+
+  .stage-header {
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 14px 14px 0;
+    margin-top: 0;
+    gap: 12px;
+  }
+
+  .stage-avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .stage-avatar span {
+    font-size: 22px;
+  }
+
+  .stage-info {
+   
+    padding-bottom: 12px;
+  }
+
+  .stage-name {
+    font-size: 17px;
+  }
+
+  .stage-tagline {
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  .stage-meta-row {
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .stage-meta-item {
+    font-size: 11px;
+  }
+
+  .stage-actions {
+    margin-top: 8px;
+  }
+
+  .stage-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  body.topbar-hidden .sort-bar {
+    top: 0;
+  }
+  .sort-bar::-webkit-scrollbar { display: none; }
+
+}
+
+/* Mod post controls */
+.mod-post-controls {
+  float: right;
+  margin-left: 12px;
+  position: relative;
+}
+.mod-post-btn {
+  background: none;
+  border: 1px solid var(--vz-border, #e5e7eb);
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--vz-accent);
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mod-post-btn-label { font-weight: 600; letter-spacing: 0.3px; }
+.mod-post-btn:hover { background: var(--vz-accent-soft); }
+.mod-post-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 30px;
+  background: white;
+  border: 1px solid var(--vz-border, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.1);
+  z-index: 50;
+  min-width: 150px;
+  overflow: hidden;
+}
+.mod-post-menu.open { display: block; }
+.mod-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 14px;
+  font-size: 13px;
+  color: #374151;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  border-top: 1px solid #f3f4f6;
+}
+.mod-menu-item:first-child { border-top: none; }
+.mod-menu-item:hover { background: #f9fafb; }
+.mod-menu-item--danger { color: #dc2626; }
+.mod-menu-item--danger:hover { background: #fef2f2; }
+
+/* Mod sidebar */
+.mod-sidebar { border-left: 3px solid var(--vz-accent); }
+.mod-sidebar__body { padding: 0; }
+.mod-sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  text-decoration: none;
+  color: var(--vz-text-secondary);
+  font-size: 13px;
+  border-bottom: 1px solid var(--vz-border-light);
+  transition: background 0.12s;
+}
+.mod-sidebar__link:last-child { border-bottom: none; }
+.mod-sidebar__link:hover { background: var(--vz-accent-soft); color: var(--vz-accent); text-decoration: none; }
+.mod-sidebar__link i { width: 14px; flex-shrink: 0; }
+.mod-sidebar__icon--accent { color: var(--vz-accent); }
+.mod-sidebar__icon--warn  { color: #e67e22; }
+.mod-sidebar__icon--purple { color: #6366f1; }
+.mod-sidebar__icon--muted  { color: var(--vz-text-muted); }

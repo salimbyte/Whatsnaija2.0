@@ -1,0 +1,21 @@
+<!-- GIF Picker Modal -->
+<div id="gif-modal" class="gif-modal" style="display:none;" role="dialog" aria-modal="true" aria-label="GIF picker">
+  <div class="gif-modal-box">
+    <div class="gif-modal-head">
+      <div class="gif-search-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="gif-search-input" placeholder="Search GIFs (powered by Tenor)…" autocomplete="off" />
+      </div>
+      <button class="gif-modal-close" onclick="closeGifPicker()" aria-label="Close GIF picker"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="gif-results" class="gif-results"></div>
+    <div style="text-align:center;padding:8px 0 4px;">
+      <button id="gif-load-more" class="gif-load-more" style="display:none;" onclick="searchGifs(_gifLastQuery, false)">
+        <i class="fa-solid fa-angles-down"></i> Load more
+      </button>
+    </div>
+    <div class="gif-tenor-badge">
+      <img src="https://www.gstatic.com/tenor/web/attribution/PB_tenor_logo_blue_horizontal.svg" alt="Powered by Tenor" height="16" />
+    </div>
+  </div>
+</div>

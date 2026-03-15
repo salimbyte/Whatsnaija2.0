@@ -1,0 +1,49 @@
+{% load filter %}
+<!-- Post sidebar: stage info, related posts, trending, footer -->
+<div class="side-col">
+
+  <!-- Stage Info -->
+  <div class="side-box stage-info-box">
+    <div class="side-box-title"><i class="fa-solid fa-layer-group"></i> {% if post.stage.title %}{{post.stage.title}}{% else %}{{post.stage.name}}{% endif %}</div>
+    <div class="side-box-body">
+      {% if post.stage.description %}
+      <p>{{post.stage.description|truncatechars:120}}</p>
+      {% else %}
+      <p>Discussion space for topics related to {% if post.stage.title %}{{post.stage.title}}{% else %}{{post.stage.name}}{% endif %}.</p>
+      {% endif %}
+      <a href="/s/{{post.stage.name}}" class="stage-info-link">View /s/{{post.stage.name}} <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+  </div>
+
+  <!-- Related Posts -->
+  {% if similar_posts %}
+  <div class="side-box">
+    <div class="side-box-title"><i class="fa-solid fa-clone"></i> More in {% if post.stage.title %}{{post.stage.title}}{% else %}{{post.stage.name}}{% endif %}</div>
+    <div class="related-posts-list">
+      {% for similar_post in similar_posts %}
+      <a href="{% url 'posts:detail' similar_post.slug %}" class="rp-item">
+        <span class="rp-title">{{similar_post.title|truncatewords:8}}</span>
+        <span class="rp-meta"><i class="fa-regular fa-comment"></i> {{similar_post.total_comments}} · <i class="fa-solid fa-arrow-up"></i> {{similar_post.total_likes}} · {{similar_post.created_at|custom_timesince}}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Trending Discussions -->
+  {% if suggests %}
+  <div class="side-box">
+    <div class="side-box-title"><i class="fa-solid fa-fire"></i> Trending</div>
+    <div class="related-posts-list">
+      {% for sp in suggests|slice:":5" %}
+      <a href="{% url 'posts:detail' sp.slug %}" class="rp-item">
+        <span class="rp-title">{{sp.title|truncatewords:8}}</span>
+        <span class="rp-meta">{% if sp.stage.title %}{{sp.stage.title}}{% else %}{{sp.stage.name}}{% endif %} · {{sp.created_at|custom_timesince}}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% include "includes/sidebar_footer.html" %}
+</div>

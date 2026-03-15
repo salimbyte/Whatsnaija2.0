@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+<style>
+/* ── Mod layout ─────────────────────────── */
+.mod-wrap { max-width: 900px; margin: 0 auto; padding: 28px 12px 40px; }
+.mod-header {
+  background: linear-gradient(135deg, #0C4B33 0%, #15805a 100%);
+  border-radius: var(--vz-radius);
+  padding: 24px 28px 20px;
+  margin-bottom: 16px;
+  color: #fff;
+  position: relative; overflow: hidden;
+}
+.mod-header::after {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 160px; height: 160px;
+  background: rgba(255,255,255,0.05); border-radius: 50%;
+  pointer-events: none;
+}
+.mod-header-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+  color: rgba(255,255,255,.65); margin-bottom: 6px;
+}
+.mod-header h1 { font-size: 20px; font-weight: 800; margin: 0 0 4px; }
+.mod-header p  { font-size: 13px; color: rgba(255,255,255,.7); margin: 0; }
+.mod-badge-super {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px;
+  border-radius: 999px; margin-top: 10px;
+}
+/* Mod nav */
+.mod-nav {
+  display: flex; gap: 0; background: var(--vz-surface);
+  border: 1px solid var(--vz-border); border-radius: var(--vz-radius-sm);
+  overflow: hidden; margin-bottom: 16px;
+}
+.mod-nav a {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 8px; font-size: 12px; font-weight: 600;
+  color: var(--vz-text-muted); text-decoration: none;
+  border-right: 1px solid var(--vz-border); transition: all .15s;
+  text-align: center;
+}
+.mod-nav a:last-child { border-right: none; }
+.mod-nav a:hover  { background: var(--vz-accent-soft); color: var(--vz-accent); }
+.mod-nav a.active { background: var(--vz-accent); color: #fff; }
+.mod-nav a .badge {
+  background: #dc2626; color: #fff; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 999px;
+}
+/* Stats */
+.mod-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 16px; }
+@media (max-width: 600px) { .mod-stats { grid-template-columns: repeat(2, 1fr); } }
+.mod-stat-card {
+  background: var(--vz-surface); border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius-sm); padding: 14px 12px; text-align: center;
+}
+.mod-stat-val { font-size: 22px; font-weight: 800; color: var(--vz-text); display: block; line-height: 1; }
+.mod-stat-lbl { font-size: 10px; color: var(--vz-text-faint); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; display: block; }
+/* Report card */
+.mod-report-card {
+  background: var(--vz-surface); border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius-sm); padding: 14px 16px; margin-bottom: 10px;
+}
+.mod-report-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.mod-report-type {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; background: #fef2f2; color: #dc2626; letter-spacing: .4px;
+}
+.mod-report-meta { font-size: 11px; color: var(--vz-text-faint); }
+.mod-report-title { font-size: 13px; font-weight: 600; color: var(--vz-text); margin-bottom: 3px; }
+.mod-report-body  { font-size: 12px; color: var(--vz-text-muted); }
+/* Action log row */
+.mod-log-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid var(--vz-border-light);
+  font-size: 12px;
+}
+.mod-log-row:last-child { border-bottom: none; }
+.mod-action-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; white-space: nowrap;
+}
+.mod-action-badge.remove  { background: #fef2f2; color: #dc2626; }
+.mod-action-badge.restore { background: #f0fdf4; color: var(--vz-accent); }
+.mod-action-badge.ban     { background: #fff7ed; color: #c2410c; }
+.mod-action-badge.unban   { background: #f0fdf4; color: var(--vz-accent); }
+.mod-action-badge.mod     { background: #eff6ff; color: #2563eb; }
+.mod-action-badge.dismiss { background: var(--vz-surface-hover); color: var(--vz-text-muted); }
+/* Inline form */
+.mod-empty { padding: 28px 0; text-align: center; color: var(--vz-text-faint); font-size: 13px; }
+.mod-empty i { font-size: 28px; margin-bottom: 10px; display: block; }
+
+
+</style>
+{% endblock link %}
+
+{% block title %}Mod: {{ stage.name }} — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="mod-wrap">
+
+  <!-- ── Header ─────────────────────────────── -->
+  <div class="mod-header">
+    <div class="mod-header-label"><i class="fa-solid fa-shield-halved"></i> Stage Moderation</div>
+    <h1>{% if stage.title %}{{ stage.title }}{% else %}{{ stage.name }}{% endif %}</h1>
+    <p>{{ stage.title }}</p>
+    {% if request.user.is_staff %}
+    <span class="mod-badge-super"><i class="fa-solid fa-star"></i> Platform Staff</span>
+    {% endif %}
+  </div>
+
+  <!-- ── Nav ───────────────────────────────── -->
+  <div class="mod-nav">
+    <a href="{% url 'stages:mod_dashboard' stage.name %}" class="active">
+      <i class="fa-solid fa-gauge"></i> <span>Overview</span>
+    </a>
+    <a href="{% url 'stages:mod_queue' stage.name %}">
+      <i class="fa-solid fa-flag"></i> <span>Queue</span>
+      {% if stats.pending %}<span class="badge">{{ stats.pending }}</span>{% endif %}
+    </a>
+    <a href="{% url 'stages:mod_members' stage.name %}">
+      <i class="fa-solid fa-users-gear"></i> <span>Members</span>
+    </a>
+    <a href="{% url 'stages:mod_log' stage.name %}">
+      <i class="fa-solid fa-scroll"></i> <span>Log</span>
+    </a>
+    <a href="{% url 'stages:stage_page' stage.name %}">
+      <i class="fa-solid fa-arrow-left"></i> <span>Back</span>
+    </a>
+  </div>
+
+  <!-- ── Stats ─────────────────────────────── -->
+  <div class="mod-stats">
+    <div class="mod-stat-card">
+      <span class="mod-stat-val" style="color:{% if stats.pending %}#dc2626{% else %}var(--vz-text){% endif %};">{{ stats.pending }}</span>
+      <span class="mod-stat-lbl">Pending Reports</span>
+    </div>
+    <div class="mod-stat-card">
+      <span class="mod-stat-val">{{ stats.total_reports }}</span>
+      <span class="mod-stat-lbl">Total Reports</span>
+    </div>
+    <div class="mod-stat-card">
+      <span class="mod-stat-val" style="color:{% if stats.blocked_posts %}#d97706{% else %}var(--vz-text){% endif %};">{{ stats.blocked_posts }}</span>
+      <span class="mod-stat-lbl">Removed Posts</span>
+    </div>
+    <div class="mod-stat-card">
+      <span class="mod-stat-val">{{ stats.active_mods }}</span>
+      <span class="mod-stat-lbl">Moderators</span>
+    </div>
+    <div class="mod-stat-card">
+      <span class="mod-stat-val" style="color:{% if stats.bans %}#c2410c{% else %}var(--vz-text){% endif %};">{{ stats.bans }}</span>
+      <span class="mod-stat-lbl">Stage Bans</span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+    <!-- ── Pending Reports ───────────────── -->
+    <div class="side-box">
+      <div class="side-box-title">
+        <i class="fa-solid fa-flag"></i> Recent Reports
+        <a href="{% url 'stages:mod_queue' stage.name %}" style="float:right;font-size:11px;font-weight:600;color:var(--vz-accent);">View all →</a>
+      </div>
+      <div class="side-box-body" style="padding:12px 16px;">
+        {% for report in pending_reports %}
+        <div class="mod-report-card">
+          <div class="mod-report-head">
+            <span class="mod-report-type">{{ report.get_report_type_display }}</span>
+            <span class="mod-report-meta">{{ report.created_at|timesince }} ago</span>
+          </div>
+          {% if report.post %}
+          <div class="mod-report-title">{{ report.post.title|truncatechars:60 }}</div>
+          {% endif %}
+          <div class="mod-report-body">by {{ report.reporter.username }}{% if report.description %} · "{{ report.description|truncatechars:50 }}"{% endif %}</div>
+        </div>
+        {% empty %}
+        <div class="mod-empty"><i class="fa-solid fa-circle-check"></i> No pending reports — all clear!</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ── Recent Actions ────────────────── -->
+    <div class="side-box">
+      <div class="side-box-title">
+        <i class="fa-solid fa-scroll"></i> Recent Actions
+        <a href="{% url 'stages:mod_log' stage.name %}" style="float:right;font-size:11px;font-weight:600;color:var(--vz-accent);">Full log →</a>
+      </div>
+      <div class="side-box-body" style="padding:10px 16px;">
+        {% for act in recent_actions %}
+        <div class="mod-log-row">
+          {% if act.action in "block_post,delete_post,delete_comment,stage_ban,ban_user" %}
+          <span class="mod-action-badge remove">
+          {% elif act.action in "unblock_post,stage_unban,unban_user" %}
+          <span class="mod-action-badge restore">
+          {% elif act.action == "add_mod" %}
+          <span class="mod-action-badge mod">
+          {% elif act.action == "remove_mod" %}
+          <span class="mod-action-badge ban">
+          {% else %}
+          <span class="mod-action-badge dismiss">
+          {% endif %}
+            {{ act.get_action_display }}</span>
+          <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--vz-text-muted);">
+            {% if act.target_user %}{{ act.target_user.username }}{% endif %}
+            {% if act.target_post %} · {{ act.target_post.title|truncatechars:30 }}{% endif %}
+          </span>
+          <span style="color:var(--vz-text-faint);white-space:nowrap;">{{ act.created_at|timesince }} ago</span>
+        </div>
+        {% empty %}
+        <div class="mod-empty"><i class="fa-solid fa-clock-rotate-left"></i> No actions recorded yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock content %}

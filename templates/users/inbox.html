@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+{% load filter %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+<link rel="stylesheet" href="{% static 'style/inbox.css' %}" />
+{% endblock link %}
+
+{% block title %}Inbox — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="content-wrap">
+
+    <!-- ══ Main Column ══════════════════════════════════ -->
+    <div class="main-col">
+
+      <div class="inbox-card">
+
+        <!-- Header -->
+        <div class="inbox-header">
+          <div class="inbox-header-icon">
+            <i class="fa-regular fa-envelope"></i>
+          </div>
+          <span class="inbox-title">Messages</span>
+          {% if total_unread %}
+          <span class="inbox-unread-badge">{{ total_unread }}</span>
+          {% endif %}
+          <a href="{% url 'posts:search' %}" class="inbox-compose-btn" title="Find someone to message">
+            <i class="fa-solid fa-paper-plane"></i> New
+          </a>
+        </div>
+
+        {% if conversations %}
+        <!-- Search bar -->
+        <form class="inbox-search-row" method="get" action="{% url 'users:inbox' %}" id="inboxSearchForm">
+          <div class="inbox-search-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+              type="text"
+              name="q"
+              id="inboxSearch"
+              class="inbox-search-input"
+              placeholder="Search by name or message…"
+              autocomplete="off"
+              value="{{ search_query }}"
+            />
+            {% if search_query %}
+            <a href="{% url 'users:inbox' %}" style="color:var(--vz-text-faint);font-size:12px;flex-shrink:0" title="Clear search"><i class="fa-solid fa-xmark"></i></a>
+            {% endif %}
+          </div>
+        </form>
+
+        <!-- Conversation list -->
+        <div id="inboxList">
+          {% for conv in conversations %}
+          <a href="{% url 'users:conversation' conv.user.username %}"
+             class="inbox-row {% if conv.unread %}inbox-row--unread{% endif %}"
+             data-username="{{ conv.user.username }}"
+             data-latest-msg-id="{{ conv.last_message.id }}"
+             data-name="{{ conv.user.username|lower }}">
+
+            <div class="inbox-avatar-wrap">
+              <div class="inbox-avatar" {% if not conv.user.profile.avatar %}style="background:{{ conv.user.username|avatar_color }}"{% endif %}>
+                {% if conv.user.profile.avatar %}
+                <img src="{{ conv.user.profile.avatar.url }}" alt="{{ conv.user.username }}" />
+                {% else %}
+                {{ conv.user.username|first|upper }}
+                {% endif %}
+              </div>
+              {% with status=conv.user.profile.online_status %}
+              {% if status == 'online' %}
+              <span class="inbox-online-dot inbox-online-dot--online" title="Online"></span>
+              {% elif status == 'away' %}
+              <span class="inbox-online-dot inbox-online-dot--away" title="Away"></span>
+              {% else %}
+              <span class="inbox-online-dot inbox-online-dot--offline" title="Offline"></span>
+              {% endif %}
+              {% endwith %}
+            </div>
+
+            <div class="inbox-row-body">
+              <div class="inbox-row-top">
+                <span class="inbox-row-name">{{ conv.user.username }}</span>
+                <span class="inbox-row-time">{{ conv.last_message.created_at|inbox_time }}</span>
+              </div>
+              <div class="inbox-row-preview">
+                {% if conv.last_message.sender == request.user %}
+                <span class="inbox-preview-you">You:</span>
+                {% else %}
+                <span class="inbox-preview-you">{{ conv.user.username }}:</span>
+                {% endif %}
+                {{ conv.last_message.body|striptags|truncatechars:70 }}
+              </div>
+            </div>
+
+            {% if conv.unread %}
+            <span class="inbox-unread-pill">{{ conv.unread }}</span>
+            {% endif %}
+
+          </a>
+          {% endfor %}
+        </div>
+
+        <div id="inboxNoResults" class="inbox-empty" style="display:none">
+          <p style="color:var(--vz-text-muted);font-size:13px">No conversations match your search.</p>
+        </div>
+
+        {% if search_query and not conversations %}
+        <div class="inbox-empty">
+          <p style="color:var(--vz-text-muted);font-size:13px">No conversations match “{{ search_query }}”</p>
+          <a href="{% url 'users:inbox' %}" class="inbox-cta-btn" style="margin-top:8px"><i class="fa-solid fa-arrow-left"></i> Back to all</a>
+        </div>
+        {% endif %}
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pager">
+          {% if page_obj.has_previous %}
+          <a href="?{% if search_query %}q={{ search_query }}&{% endif %}page={{ page_obj.previous_page_number }}" class="pager-btn" title="Previous"><i class="fa-solid fa-chevron-left"></i></a>
+          {% endif %}
+          {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+            <span class="pager-num pager-num--current">{{ num }}</span>
+            {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+            <a href="?{% if search_query %}q={{ search_query }}&{% endif %}page={{ num }}" class="pager-num">{{ num }}</a>
+            {% elif num == 2 or num == page_obj.paginator.num_pages|add:"-1" %}
+            <span class="pager-ellipsis">…</span>
+            {% endif %}
+          {% endfor %}
+          {% if page_obj.has_next %}
+          <a href="?{% if search_query %}q={{ search_query }}&{% endif %}page={{ page_obj.next_page_number }}" class="pager-btn" title="Next"><i class="fa-solid fa-chevron-right"></i></a>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="inbox-empty">
+          <div class="inbox-empty-icon"><i class="fa-regular fa-envelope"></i></div>
+          <h4>No messages yet</h4>
+          <p>Visit someone's profile to send them a message.</p>
+          <a href="{% url 'posts:search' %}" class="inbox-cta-btn" style="margin-top:12px"><i class="fa-solid fa-users"></i> Browse members</a>
+        </div>
+        {% endif %}
+
+      </div><!-- /.inbox-card -->
+
+    </div><!-- /.main-col -->
+
+    <!-- ══ Sidebar ══════════════════════════════════════ -->
+    <div class="side-col">
+
+      <div class="side-box user-card">
+        <div class="user-card-stripe"></div>
+        <div class="user-card-head">
+          <div class="user-card-avatar">
+            {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" />
+            {% else %}
+            <div class="avatar-letter" style="background:{{ user.username|avatar_color }}">{{ user.username|first|upper }}</div>
+            {% endif %}
+          </div>
+          <div class="user-card-info">
+            <a href="/{{ user.username }}" class="user-card-name">{{ user.username }}</a>
+            <span class="user-card-label">{% if user.is_staff %}Moderator{% elif user.is_verified %}Verified{% else %}Member{% endif %}</span>
+          </div>
+        </div>
+        <div class="user-card-actions">
+          <a href="{% url 'posts:search' %}" class="user-action-primary"><i class="fa-solid fa-paper-plane"></i> New Message</a>
+        </div>
+      </div>
+
+      {% if following %}
+      <div class="side-box inbox-follow-box">
+        <div class="side-box-title"><i class="fa-solid fa-user-group"></i> People you follow</div>
+        <div class="inbox-people-list">
+          {% for f in following %}
+          <div class="inbox-person-row">
+            <div class="inbox-person-avatar" {% if not f.following.profile.avatar %}style="background:{{ f.following.username|avatar_color }}"{% endif %}>
+              {% if f.following.profile.avatar %}
+              <img src="{{ f.following.profile.avatar.url }}" alt="{{ f.following.username }}" />
+              {% else %}
+              {{ f.following.username|first|upper }}
+              {% endif %}
+            </div>
+            <a href="/{{ f.following.username }}/" class="inbox-person-name">{{ f.following.username }}</a>
+            <a href="{% url 'users:conversation' f.following.username %}" class="inbox-person-msg" title="Message {{ f.following.username }}">
+              <i class="fa-regular fa-envelope"></i>
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+        <a href="{% url 'posts:search' %}" class="inbox-see-all">See all <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+      {% endif %}
+
+      {% include "includes/sidebar_footer.html" %}
+
+    </div><!-- /.side-col -->
+
+  </div>
+</div>
+
+<script>
+(function () {
+  var form = document.getElementById('inboxSearchForm');
+  var searchInput = document.getElementById('inboxSearch');
+  var timer;
+
+  if (form && searchInput) {
+    // Debounced server-side search
+    searchInput.addEventListener('input', function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        form.submit();
+      }, 500);
+    });
+
+    // Submit on Enter immediately
+    searchInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        clearTimeout(timer);
+      }
+    });
+
+    // Auto-focus search input if there's a query
+    if (searchInput.value) {
+      searchInput.focus();
+      searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+    }
+  }
+
+  /* ── Real-time inbox polling ──────────────────────── */
+  /* Only poll when NOT doing a search (server-side search already paginated) */
+  {% if not search_query %}
+  (function () {
+    var list = document.getElementById('inboxList');
+    if (!list) return;
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function findRow(username) {
+      return list.querySelector('.inbox-row[data-username="' + username + '"]');
+    }
+
+    function buildRow(conv) {
+      var unreadClass = conv.unread > 0 ? ' inbox-row--unread' : '';
+      var avatarStyle = conv.avatar_url ? '' : ' style="background:' + esc(conv.avatar_style) + '"';
+      var avatarContent = conv.avatar_url
+        ? '<img src="' + esc(conv.avatar_url) + '" alt="' + esc(conv.username) + '">'
+        : esc(conv.initial);
+      var senderLabel = conv.last_msg_is_mine
+        ? '<span class="inbox-preview-you">You:</span> '
+        : '<span class="inbox-preview-you">' + esc(conv.username) + ':</span> ';
+      var unreadPill = conv.unread > 0
+        ? '<span class="inbox-unread-pill">' + conv.unread + '</span>'
+        : '';
+      return (
+        '<a href="/users/messages/' + esc(conv.username) + '/"' +
+          ' class="inbox-row' + unreadClass + '"' +
+          ' data-username="' + esc(conv.username) + '"' +
+          ' data-latest-msg-id="' + conv.last_msg_id + '"' +
+          ' data-name="' + esc(conv.username.toLowerCase()) + '">' +
+          '<div class="inbox-avatar-wrap">' +
+            '<div class="inbox-avatar"' + avatarStyle + '>' + avatarContent + '</div>' +
+            '<span class="inbox-online-dot inbox-online-dot--offline"></span>' +
+          '</div>' +
+          '<div class="inbox-row-body">' +
+            '<div class="inbox-row-top">' +
+              '<span class="inbox-row-name">' + esc(conv.username) + '</span>' +
+              '<span class="inbox-row-time">' + esc(conv.time_label) + '</span>' +
+            '</div>' +
+            '<div class="inbox-row-preview">' + senderLabel + esc(conv.preview) + '</div>' +
+          '</div>' +
+          unreadPill +
+        '</a>'
+      );
+    }
+
+    function flash(el) {
+      el.style.transition = 'background 0.6s';
+      el.style.background = 'rgba(12,75,51,0.12)';
+      setTimeout(function () { el.style.background = ''; }, 800);
+    }
+
+    function poll() {
+      fetch('{% url "users:inbox_poll" %}', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data || !data.conversations) return;
+
+          data.conversations.forEach(function (conv) {
+            var row = findRow(conv.username);
+            var curId = row ? parseInt(row.dataset.latestMsgId || '0', 10) : -1;
+
+            if (!row) {
+              /* Brand-new conversation → prepend */
+              var tmp = document.createElement('div');
+              tmp.innerHTML = buildRow(conv);
+              var newRow = tmp.firstChild;
+              list.insertBefore(newRow, list.firstChild);
+              flash(newRow);
+
+              /* Hide the "no messages" placeholder if visible */
+              var empty = document.querySelector('.inbox-empty');
+              if (empty) empty.style.display = 'none';
+
+            } else if (conv.last_msg_id > curId) {
+              /* Updated conversation → update content & move to top */
+              row.dataset.latestMsgId = conv.last_msg_id;
+
+              /* Preview */
+              var preview = row.querySelector('.inbox-row-preview');
+              if (preview) {
+                var senderLabel = conv.last_msg_is_mine
+                  ? '<span class="inbox-preview-you">You:</span> '
+                  : '<span class="inbox-preview-you">' + esc(conv.username) + ':</span> ';
+                preview.innerHTML = senderLabel + esc(conv.preview);
+              }
+
+              /* Time */
+              var timeEl = row.querySelector('.inbox-row-time');
+              if (timeEl) timeEl.textContent = conv.time_label;
+
+              /* Unread pill */
+              var pill = row.querySelector('.inbox-unread-pill');
+              if (conv.unread > 0) {
+                if (!pill) {
+                  pill = document.createElement('span');
+                  pill.className = 'inbox-unread-pill';
+                  row.appendChild(pill);
+                }
+                pill.textContent = conv.unread;
+                row.classList.add('inbox-row--unread');
+              }
+
+              /* Move to top if not already first */
+              if (list.firstChild !== row) {
+                list.insertBefore(row, list.firstChild);
+                flash(row);
+              }
+            }
+          });
+        })
+        .catch(function () {});
+    }
+
+    setInterval(poll, 5000);
+  })();
+  {% endif %}
+})();
+</script>
+{% endblock content %}

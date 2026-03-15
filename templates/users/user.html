@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+{% load filter %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/user.css' %}" />
+{% endblock link %}
+
+{% block title %}{{ profile_user.username }} — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="page-wrapper">
+  <div class="content-wrap">
+
+    <!-- Main Column -->
+    <div class="main-col">
+
+      <!-- Profile Header Card -->
+      {% if messages %}
+      <div class="form-messages">
+        {% for message in messages %}
+        <div class="profile-alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+          <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="profile-card">
+        <div class="profile-banner{% if profile.banner %} has-image{% endif %}">
+          {% if profile.banner %}
+          <img src="{{ profile.banner.url }}" alt="Banner" class="banner-img" />
+          {% else %}
+          <div class="banner-pattern"></div>
+          {% endif %}
+        </div>
+        <div class="profile-header">
+          <div class="profile-avatar">
+            {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" alt="{{ profile_user.username }}" />
+            {% else %}
+            <div class="avatar-letter" style="background:{{ profile_user.username|avatar_color }}">{{ profile_user.username|first|upper }}</div>
+            {% endif %}
+          </div>
+          <div class="profile-info">
+            <div class="profile-name-row">
+              <h1 class="profile-username">{{ profile_user.username }}</h1>
+              {% if profile_user.is_staff %}
+              <span class="profile-badge mod"><i class="fa-solid fa-shield-halved"></i> Mod</span>
+              {% endif %}
+              {% if profile_user.is_verified %}
+              <span class="profile-badge verified"><i class="fa-solid fa-circle-check"></i> Verified</span>
+              {% endif %}
+            </div>
+            {% if profile.bio %}
+            <p class="profile-bio">{{ profile.bio }}</p>
+            {% else %}
+            <p class="profile-bio profile-bio--empty">{{ profile_user.username }} hasn't added a bio yet.</p>
+            {% endif %}
+            <div class="profile-meta-row">
+              {% if profile.location %}
+              <span class="profile-meta-item"><i class="fa-solid fa-location-dot"></i> {{ profile.location }}</span>
+              {% endif %}
+              <span class="profile-meta-item"><i class="fa-regular fa-calendar"></i> Joined <span title="{{ profile_user.date_joined|date:'N j, Y' }}">{{ profile_user.date_joined|date:"M Y" }}</span></span>
+              {% if profile.online_status != 'online' %}
+              <span class="profile-meta-item meta-hours-online"><i class="fa-solid fa-clock"></i> {{ profile.time_online_display }} online</span>
+              {% endif %}
+              <span class="profile-meta-item">
+                <i class="fa-solid fa-circle status-{{ profile.online_status }}"></i>
+                {% if profile.online_status == 'online' %}
+                  Online now
+                {% elif profile.online_status == 'away' %}
+                  Away · {{ profile.last_seen|naturaltime }}
+                {% elif profile.online_status == 'offline' %}
+                  Last seen {{ profile.last_seen|naturaltime }}
+                {% else %}
+                  Never seen
+                {% endif %}
+              </span>
+            </div>
+            <div class="profile-actions">
+              {% if request.user == profile_user %}
+              <a href="{% url 'users:edit_profile' %}" class="profile-btn primary"><i class="fa-solid fa-pen"></i> Edit Profile</a>
+              <a href="{% url 'users:change_password' %}" class="profile-btn"><i class="fa-solid fa-key"></i> Password</a>
+              {% elif request.user.is_authenticated %}
+              <button type="button" class="profile-follow-btn {% if is_following %}profile-follow-btn--following{% else %}profile-follow-btn--follow{% endif %}" id="follow-btn" onclick="toggleFollow()">
+                <i class="fa-solid {% if is_following %}fa-user-check{% else %}fa-user-plus{% endif %}"></i>
+                <span id="follow-text">{% if is_following %}Following{% else %}Follow{% endif %}</span>
+              </button>
+              <a href="{% url 'users:conversation' profile_user.username %}" class="profile-btn"><i class="fa-solid fa-envelope"></i> Message</a>
+              <button type="button" class="profile-btn danger" title="Report user" onclick="reportUser()"><i class="fa-solid fa-flag"></i> Report</button>
+              {% else %}
+              <a href="{% url 'users:login' %}?next=/{{ profile_user.username }}/" class="profile-btn primary"><i class="fa-solid fa-user-plus"></i> Follow</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <!-- Stats bar — inside card -->
+        <div class="stats-bar">
+          <div class="stat-item">
+            <span class="stat-value" id="followers-count">{{ followers_count }}</span>
+            <span class="stat-label">Followers</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ following_count }}</span>
+            <span class="stat-label">Following</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ posts_count|intcomma }}</span>
+            <span class="stat-label">Posts</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Tabs -->
+      <div class="profile-tabs">
+        <button class="profile-tab active" data-tab="posts">
+          <i class="fa-solid fa-pen-nib"></i> Posts <span class="tab-count">{{ posts_count }}</span>
+        </button>
+        <button class="profile-tab" data-tab="comments">
+          <i class="fa-regular fa-comment"></i> Comments <span class="tab-count">{{ comments|length }}</span>
+        </button>
+      </div>
+
+      <!-- Posts Tab -->
+      <div class="tab-panel active" id="tab-posts">
+        <div class="user-posts-list">
+          {% for post in posts %}
+          <div class="user-post-row">
+            {% if post.images.count or post.og_image %}
+            <div class="post-thumb">
+              {% if post.images.count %}
+              <img src="{{ post.images.first.image.url }}" alt="{{ post.title }}" class="thumb-img" loading="lazy" />
+              {% else %}
+              <img src="{{ post.og_image }}" alt="{{ post.title }}" class="thumb-img" loading="lazy" />
+              {% endif %}
+            </div>
+            {% endif %}
+            <div class="user-post-main">
+              <div class="user-post-title-line">
+                <a href="{% url 'posts:detail' post.slug %}" class="user-post-title" onclick="event.stopPropagation()">{{ post.title }}</a>
+                <a href="/s/{{ post.stage.name }}" class="user-post-stage" onclick="event.stopPropagation()">{% if post.stage.title %}{{ post.stage.title }}{% else %}{{ post.stage.name }}{% endif %}</a>
+                {% if post.url %}
+                <a href="{{ post.url }}" class="post-domain-link" target="_blank" rel="noopener noreferrer" title="{{ post.url }}" onclick="event.stopPropagation()">{{ post.url|get_domain_from_url }}</a>
+                {% endif %}
+              </div>
+              {% if post.body %}
+              {% with excerpt=post.body|clean_excerpt:22 %}
+              {% if excerpt != post.title %}
+              <p class="user-post-snippet">{{ excerpt }}</p>
+              {% endif %}
+              {% endwith %}
+              {% endif %}
+              <div class="user-post-meta">
+                <span class="upm-likes"><i class="fa-solid fa-arrow-up"></i> {{ post.like_count }}</span>
+                <span class="upm-sep">·</span>
+                <a href="{% url 'posts:detail' post.slug %}#comments" class="upm-comments" onclick="event.stopPropagation()"><i class="fa-regular fa-comment"></i> {{ post.comment_count }}</a>
+                <span class="upm-sep">·</span>
+                <span class="upm-time"><i class="fa-regular fa-clock"></i> {{ post.created_at|custom_timesince }}</span>
+              </div>
+            </div>
+            <a class="user-post-row-link" href="{% url 'posts:detail' post.slug %}" aria-hidden="true" tabindex="-1"></a>
+          </div>
+          {% empty %}
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-pen-fancy"></i></div>
+            <h3>No posts yet</h3>
+            <p>{{ profile_user.username }} hasn't published any posts.</p>
+            {% if request.user == profile_user %}
+            <a href="{% url 'posts:create' %}" class="profile-btn primary"><i class="fa-solid fa-plus"></i> Write your first post</a>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Comments Tab -->
+      <div class="tab-panel" id="tab-comments">
+        <div class="user-comments-list">
+          {% for comment in comments %}
+          <div class="user-comment-row">
+            <div class="user-comment-header">
+              {% if comment.post %}
+              <i class="fa-regular fa-comment-dots"></i>
+              <span>commented on</span>
+              <a href="{% url 'posts:detail' comment.post.slug %}" class="comment-post-link">{{ comment.post.title|truncatewords:10 }}</a>
+              <span class="comment-time">{{ comment.created_at|custom_timesince }}</span>
+              {% else %}
+              <i class="fa-regular fa-comment-dots"></i>
+              <span>commented on a deleted post</span>
+              <span class="comment-time">{{ comment.created_at|custom_timesince }}</span>
+              {% endif %}
+            </div>
+            <div class="user-comment-body">{{ comment.body|striptags|truncatewords:40 }}</div>
+            <div class="user-comment-footer">
+              {% if comment.total_likes > 0 %}
+              <span class="upm-likes"><i class="fa-solid fa-thumbs-up"></i> {{ comment.total_likes }}</span>
+              {% endif %}
+              {% if comment.reply_to %}
+              {% if comment.total_likes > 0 %}<span class="upm-sep">·</span>{% endif %}
+              <span class="comment-is-reply"><i class="fa-solid fa-reply"></i> Reply</span>
+              {% endif %}
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fa-regular fa-comment-dots"></i></div>
+            <h3>No comments yet</h3>
+            <p>{{ profile_user.username }} hasn't left any comments.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sidebar -->
+    <div class="side-col">
+
+      {% if active_stages %}
+      <div class="side-box">
+        <div class="side-box-title"><i class="fa-solid fa-layer-group"></i> Active in</div>
+        <div class="side-box-body" style="padding: 6px;">
+          <ul class="other-stages-list">
+            {% for stage in active_stages %}
+            <li>
+              <a href="/s/{{ stage.name }}">
+                <span class="stage-mini-avatar" style="background:{{ stage.name|avatar_color }}">{{ stage.name|avatar_initials }}</span>
+                <span class="stage-mini-body">
+                  <span class="stage-mini-name">{% if stage.title %}{{ stage.title }}{% else %}{{ stage.name }}{% endif %}</span>
+                </span>
+                {% if stage.members_count %}<span class="stage-mini-count">{{ stage.members_count }}</span>{% endif %}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if mutual_followers %}
+      <div class="side-box">
+        <div class="side-box-title"><i class="fa-solid fa-user-group"></i> Mutual followers</div>
+        <div class="side-box-body">
+          <div class="mutual-list">
+            {% for f in mutual_followers %}
+            <a href="/{{ f.follower.username }}/" class="mutual-item" title="{{ f.follower.username }}">
+              <div class="mutual-avatar" {% if not f.follower.profile.avatar %}style="background:{{ f.follower.username|avatar_color }}"{% endif %}>
+                {% if f.follower.profile.avatar %}
+                <img src="{{ f.follower.profile.avatar.url }}" alt="{{ f.follower.username }}" />
+                {% else %}
+                {{ f.follower.username|first|upper }}
+                {% endif %}
+              </div>
+              <span class="mutual-name">{{ f.follower.username }}</span>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% include "includes/sidebar_footer.html" %}
+
+    </div>
+
+  </div>
+</div>
+{% endblock content %}
+
+{% block script %}
+<script>
+/* Smart default tab: show whichever tab has content */
+(function () {
+  var postCount = {{ posts_count }};
+  var commentCount = {{ comments|length }};
+  if (postCount === 0 && commentCount > 0) {
+    document.querySelectorAll('.profile-tab').forEach(function (t) { t.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+    document.querySelector('[data-tab="comments"]').classList.add('active');
+    document.getElementById('tab-comments').classList.add('active');
+  }
+})();
+
+document.querySelectorAll('.profile-tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.profile-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+{% if request.user.is_authenticated and request.user != profile_user %}
+function toggleFollow() {
+  var btn = document.getElementById('follow-btn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  fetch("{% url 'users:toggle_follow' profile_user.username %}", {
+    method: 'POST',
+    headers: {'X-CSRFToken': window.CSRF_TOKEN}
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var txt = document.getElementById('follow-text');
+    var cnt = document.getElementById('followers-count');
+    if (data.following) {
+      txt.textContent = 'Following';
+      btn.querySelector('i').className = 'fa-solid fa-user-check';
+      btn.className = 'profile-follow-btn profile-follow-btn--following';
+    } else {
+      txt.textContent = 'Follow';
+      btn.querySelector('i').className = 'fa-solid fa-user-plus';
+      btn.className = 'profile-follow-btn profile-follow-btn--follow';
+    }
+    cnt.textContent = data.followers_count;
+    showToast(data.following ? 'Following {{ profile_user.username }}' : 'Unfollowed {{ profile_user.username }}', 'success');
+  })
+  .finally(function() {
+    btn.disabled = false;
+    btn.style.opacity = '';
+  });
+}
+
+function reportUser() {
+  if (!confirm('Report this user?')) return;
+  showToast('User reported. Thank you.', 'info');
+}
+{% endif %}
+</script>
+{% endblock script %}

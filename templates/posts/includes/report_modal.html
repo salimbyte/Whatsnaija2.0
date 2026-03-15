@@ -1,0 +1,93 @@
+<!-- Report Modal — auth users only -->
+{% if request.user.is_authenticated %}
+<div class="report-modal" id="reportModal">
+  <div class="report-modal-backdrop" onclick="closeReportModal()"></div>
+  <div class="report-modal-box">
+    <div class="report-modal-head">
+      <div class="report-modal-title">
+        <i class="fa-solid fa-flag"></i>
+        <span>Report <span id="report-target-label">content</span></span>
+      </div>
+      <button type="button" class="report-modal-close" onclick="closeReportModal()" aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="report-modal-body">
+      <p class="report-prompt">Why are you reporting this? Select the reason that best applies.</p>
+      <div class="report-reasons">
+        <label class="report-reason">
+          <input type="radio" name="report_type" value="spam" />
+          <div class="reason-card">
+            <div class="reason-icon"><i class="fa-solid fa-robot"></i></div>
+            <div class="reason-info">
+              <span class="reason-label">Spam</span>
+              <span class="reason-desc">Misleading links, repetitive content, or bot activity</span>
+            </div>
+          </div>
+        </label>
+        <label class="report-reason">
+          <input type="radio" name="report_type" value="harassment" />
+          <div class="reason-card">
+            <div class="reason-icon"><i class="fa-solid fa-hand-fist"></i></div>
+            <div class="reason-info">
+              <span class="reason-label">Harassment</span>
+              <span class="reason-desc">Targeted bullying, threats, or intimidation</span>
+            </div>
+          </div>
+        </label>
+        <label class="report-reason">
+          <input type="radio" name="report_type" value="hate_speech" />
+          <div class="reason-card">
+            <div class="reason-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="reason-info">
+              <span class="reason-label">Hate Speech</span>
+              <span class="reason-desc">Slurs, discrimination, or attacks based on identity</span>
+            </div>
+          </div>
+        </label>
+        <label class="report-reason">
+          <input type="radio" name="report_type" value="misinformation" />
+          <div class="reason-card">
+            <div class="reason-icon"><i class="fa-solid fa-circle-info"></i></div>
+            <div class="reason-info">
+              <span class="reason-label">Misinformation</span>
+              <span class="reason-desc">False or misleading claims presented as fact</span>
+            </div>
+          </div>
+        </label>
+        <label class="report-reason">
+          <input type="radio" name="report_type" value="nsfw" />
+          <div class="reason-card">
+            <div class="reason-icon"><i class="fa-solid fa-eye-slash"></i></div>
+            <div class="reason-info">
+              <span class="reason-label">NSFW / Inappropriate</span>
+              <span class="reason-desc">Sexual content, gore, or disturbing imagery</span>
+            </div>
+          </div>
+        </label>
+        <label class="report-reason">
+          <input type="radio" name="report_type" value="other" />
+          <div class="reason-card">
+            <div class="reason-icon"><i class="fa-solid fa-ellipsis"></i></div>
+            <div class="reason-info">
+              <span class="reason-label">Other</span>
+              <span class="reason-desc">Something else not listed above</span>
+            </div>
+          </div>
+        </label>
+      </div>
+      <div class="report-desc-wrap" id="report-desc-wrap">
+        <label class="report-desc-label" for="report-desc">Additional details <span class="report-optional">(optional)</span></label>
+        <textarea id="report-desc" class="report-desc-input" rows="3" maxlength="500" placeholder="Tell us more about why you're reporting this…"></textarea>
+        <div class="report-desc-counter"><span id="report-char-count">0</span>/500</div>
+      </div>
+    </div>
+    <div class="report-modal-foot">
+      <button type="button" class="report-btn-cancel" onclick="closeReportModal()">Cancel</button>
+      <button type="button" class="report-btn-submit" id="report-submit-btn" onclick="submitReport()" disabled>
+        <i class="fa-solid fa-paper-plane"></i> Submit Report
+      </button>
+    </div>
+  </div>
+</div>
+{% endif %}

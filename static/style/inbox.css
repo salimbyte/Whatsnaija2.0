@@ -1,0 +1,385 @@
+/* ═══════════════════════════════════════════════
+   Inbox
+═══════════════════════════════════════════════ */
+.inbox-card {
+  background: var(--vz-surface);
+  border: 1px solid var(--vz-border);
+  border-top: 4px solid var(--vz-top-border);
+  border-radius: var(--vz-radius);
+  overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────────── */
+.inbox-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--vz-border-light);
+}
+
+.inbox-header-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--vz-accent-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--vz-accent);
+  flex-shrink: 0;
+}
+
+.inbox-title {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--vz-text);
+}
+
+.inbox-unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  background: var(--vz-accent);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ── Search conversations ────────────────────── */
+.inbox-search-row {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--vz-border-light);
+}
+
+.inbox-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  background: var(--vz-bg);
+  border: 1.5px solid #c0c2c8;
+  border-radius: var(--vz-radius-sm, 8px);
+  transition: border-color 0.15s;
+}
+
+.inbox-search-wrap:focus-within {
+  border-color: var(--vz-accent);
+}
+
+.inbox-search-wrap i {
+  font-size: 12px;
+  color: var(--vz-text-faint);
+  flex-shrink: 0;
+}
+
+.inbox-search-input {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--vz-text);
+  padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.inbox-search-input::placeholder { color: var(--vz-text-muted, #6b6e76); }
+
+/* ── Conversation row ────────────────────────── */
+.inbox-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--vz-border-light);
+  border-left: 3px solid transparent;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.12s;
+  cursor: pointer;
+}
+
+.inbox-row:last-child { border-bottom: none; }
+.inbox-row:hover { background: var(--vz-surface-hover); }
+.inbox-row--unread {
+  background: var(--vz-accent-soft);
+  border-left-color: var(--vz-accent);
+}
+.inbox-row--unread:hover { background: var(--vz-accent-glow); }
+
+/* ── Avatar with online dot ─────────────────── */
+.inbox-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.inbox-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--vz-accent), var(--vz-accent-hover));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.inbox-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.inbox-online-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid var(--vz-surface);
+}
+
+.inbox-online-dot--online { background: var(--vz-accent); }
+.inbox-online-dot--away   { background: #f59e0b; }
+.inbox-online-dot--offline { background: var(--vz-border); }
+
+/* ── Row body ────────────────────────────────── */
+.inbox-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.inbox-row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.inbox-row-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vz-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inbox-row--unread .inbox-row-name { font-weight: 700; }
+
+.inbox-row-time {
+  font-size: 11px;
+  color: var(--vz-text-faint);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.inbox-row-preview {
+  font-size: 13px;
+  color: var(--vz-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inbox-row--unread .inbox-row-preview {
+  color: var(--vz-text);
+  font-weight: 500;
+}
+
+.inbox-preview-you {
+  color: var(--vz-text-faint);
+  font-size: 12px;
+  margin-right: 2px;
+}
+
+/* ── Unread pill ─────────────────────────────── */
+.inbox-unread-pill {
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--vz-accent);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Empty state ─────────────────────────────── */
+.inbox-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 52px 24px;
+  text-align: center;
+  gap: 8px;
+}
+
+.inbox-empty-icon {
+  font-size: 36px;
+  color: var(--vz-text-faint);
+  margin-bottom: 4px;
+}
+
+.inbox-empty h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--vz-text);
+  margin: 0;
+}
+
+.inbox-empty p {
+  font-size: 13px;
+  color: var(--vz-text-muted);
+  margin: 0;
+}
+
+
+/* ── Compose button ──────────────────── */
+.inbox-compose-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--vz-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--vz-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.inbox-compose-btn:hover { background: var(--vz-accent-hover); color: #fff; text-decoration: none; }
+
+/* ── CTA button (empty state) ────────────── */\n.inbox-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  background: var(--vz-accent-glow);
+  color: var(--vz-accent);
+  border: 1.5px solid var(--vz-accent-mid);
+  border-radius: var(--vz-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.inbox-cta-btn:hover { background: var(--vz-accent-mid); color: var(--vz-accent); text-decoration: none; }
+
+/* ── Sidebar: people you follow ─────────── */
+.inbox-people-list {
+  display: flex;
+  flex-direction: column;
+}
+.inbox-person-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--vz-border-light);
+  transition: background 0.12s;
+}
+.inbox-person-row:last-child { border-bottom: none; }
+.inbox-person-row:hover { background: var(--vz-bg); }
+.inbox-person-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--vz-accent), var(--vz-accent-hover));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.inbox-person-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.inbox-person-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vz-text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.inbox-person-msg {
+  font-size: 14px;
+  color: var(--vz-text-faint);
+  padding: 5px 10px;
+  border: 1px solid var(--vz-border);
+  border-radius: 999px;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+.inbox-person-row:hover .inbox-person-msg {
+  background: var(--vz-accent);
+  color: #fff;
+  border-color: var(--vz-accent);
+}
+
+/* ── See all link ──────────────────────── */
+.inbox-see-all {
+  display: block;
+  text-align: center;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vz-accent);
+  text-decoration: none;
+  border-top: 1px solid var(--vz-border-light);
+  transition: background 0.12s;
+}
+.inbox-see-all:hover {
+  background: var(--vz-bg);
+  text-decoration: none;
+}
+.inbox-see-all i {
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+/* ── Hidden filter ──────────────────────── */
+.inbox-row--hidden { display: none !important; }
+
+@media (max-width: 768px) {
+  .inbox-search-input {
+    font-size: 16px; /* prevent iOS zoom on focus */
+  }
+
+  .inbox-row {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .inbox-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+}

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+<style>
+.legal-page { max-width: 720px; }
+.legal-intro { margin: 0 0 20px; font-size: 14px; color: var(--vz-text-muted); line-height: 1.65; }
+.legal-updated { font-size: 12px; color: var(--vz-text-faint); margin: 0 0 16px; }
+.legal-section { margin-top: 24px; }
+.legal-section-title {
+  font-size: 13px; font-weight: 700; color: var(--vz-text);
+  text-transform: uppercase; letter-spacing: 0.4px;
+  padding-bottom: 8px; margin: 0 0 12px;
+  border-bottom: 1px solid var(--vz-border-light);
+  display: flex; align-items: center; gap: 8px;
+}
+.legal-section-title i { color: var(--vz-accent); font-size: 12px; }
+.legal-text {
+  font-size: 14px; line-height: 1.7; color: var(--vz-text-secondary); margin: 0 0 12px;
+}
+.legal-text:last-child { margin-bottom: 0; }
+.legal-list {
+  margin: 8px 0 12px; padding-left: 20px;
+  font-size: 14px; line-height: 1.7; color: var(--vz-text-secondary);
+}
+.legal-list li { padding: 3px 0; }
+.legal-note {
+  margin: 20px 0 0; padding: 14px 16px; border-radius: var(--vz-radius-sm);
+  background: rgba(12,75,51,0.04); border-left: 3px solid var(--vz-accent);
+  font-size: 13px; color: var(--vz-text-muted); line-height: 1.6;
+}
+.legal-note a { color: var(--vz-accent); font-weight: 600; }
+</style>
+{% endblock link %}
+
+{% block title %}Terms of Service — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="page-wrapper legal-page">
+
+  <div class="side-box" style="margin-bottom: 16px;">
+    <div class="side-box-title" style="padding: 14px 20px; font-size: 12px;">
+      <i class="fa-solid fa-file-contract"></i> Terms of Service
+    </div>
+    <div class="side-box-body" style="padding: 24px 28px;">
+      <p class="legal-updated">Last updated: March 8, 2026</p>
+      <p class="legal-intro">
+        By accessing or using WhatsNaija, you agree to be bound by these Terms of Service. If you do not agree, do not use the platform.
+      </p>
+
+      <!-- 1. Acceptance -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-handshake"></i> 1. Acceptance of Terms</div>
+        <p class="legal-text">
+          By creating an account or using WhatsNaija in any way, you confirm that you are at least 13 years of age and agree to comply with these Terms. We may update these Terms from time to time, and continued use of the platform constitutes acceptance of any changes.
+        </p>
+      </div>
+
+      <!-- 2. User-Generated Content -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-pen-to-square"></i> 2. User-Generated Content</div>
+        <p class="legal-text">
+          WhatsNaija is a user-generated content platform. You are solely responsible for all content you post, share, or transmit through the platform, including text, images, links, and comments.
+        </p>
+        <p class="legal-text">By posting content on WhatsNaija, you:</p>
+        <ul class="legal-list">
+          <li>Confirm that you own or have the right to share the content.</li>
+          <li>Grant Vaze a non-exclusive, royalty-free, worldwide license to display, distribute, and store your content on the platform.</li>
+          <li>Acknowledge that your content may be viewed by other users and the public.</li>
+          <li>Retain ownership of your original content and may delete it at any time.</li>
+        </ul>
+        <p class="legal-text">
+          Vaze does not claim ownership of user content. However, we reserve the right to remove, edit, or restrict any content that violates these Terms or our <a href="{% url 'rules' %}" style="color: var(--vz-accent); font-weight: 600;">Community Rules</a>.
+        </p>
+      </div>
+
+      <!-- 3. Prohibited Conduct -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-ban"></i> 3. Prohibited Conduct</div>
+        <p class="legal-text">You agree not to:</p>
+        <ul class="legal-list">
+          <li>Post content that is illegal, threatening, abusive, defamatory, or obscene.</li>
+          <li>Harass, bully, or intimidate other users.</li>
+          <li>Impersonate any person or entity.</li>
+          <li>Post spam, malware, or deceptive content.</li>
+          <li>Attempt to access other users' accounts or private data.</li>
+          <li>Use the platform for any illegal purpose.</li>
+          <li>Circumvent or interfere with security features of the platform.</li>
+          <li>Scrape, harvest, or collect user data without consent.</li>
+        </ul>
+        <p class="legal-text">
+          A detailed list of what is and isn't allowed can be found in our <a href="{% url 'rules' %}" style="color: var(--vz-accent); font-weight: 600;">Community Rules</a>.
+        </p>
+      </div>
+
+      <!-- 4. Content Moderation -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-shield-halved"></i> 4. Content Moderation</div>
+        <p class="legal-text">
+          Vaze reserves the right to review, remove, or restrict any content or account at our sole discretion, with or without notice, for any reason, including but not limited to violations of these Terms or our Community Rules.
+        </p>
+        <p class="legal-text">
+          We are not obligated to monitor all content but may do so. We act on reports from users and may use automated tools to detect violations.
+        </p>
+      </div>
+
+      <!-- 5. Accounts -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-user-shield"></i> 5. Accounts & Security</div>
+        <p class="legal-text">
+          You are responsible for maintaining the security of your account and password. WhatsNaija is not liable for any loss or damage resulting from unauthorized access to your account. You must notify us immediately if you suspect unauthorized use.
+        </p>
+        <p class="legal-text">
+          One person may not maintain more than one account. Accounts created to evade bans or suspensions will be removed.
+        </p>
+      </div>
+
+      <!-- 6. Intellectual Property -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-copyright"></i> 6. Intellectual Property</div>
+        <p class="legal-text">
+          The Vaze name, logo, design, and underlying code are the property of WhatsNaija. You may not copy, modify, or distribute any part of the platform without permission.
+        </p>
+        <p class="legal-text">
+          If you believe content on WhatsNaija infringes your copyright, please contact us with details and we will review and take appropriate action.
+        </p>
+      </div>
+
+      <!-- 7. Disclaimers -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-triangle-exclamation"></i> 7. Disclaimers</div>
+        <p class="legal-text">
+          WhatsNaija is provided "as is" and "as available" without warranties of any kind, either express or implied. We do not guarantee that the platform will be uninterrupted, error-free, or secure.
+        </p>
+        <p class="legal-text">
+          WhatsNaija is not responsible for the accuracy, legality, or quality of any user-generated content. Views expressed by users are their own and do not represent the views of WhatsNaija.
+        </p>
+      </div>
+
+      <!-- 8. Limitation of Liability -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-scale-balanced"></i> 8. Limitation of Liability</div>
+        <p class="legal-text">
+          To the fullest extent permitted by law, Vaze shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the platform, including loss of data, revenue, or goodwill.
+        </p>
+      </div>
+
+      <!-- 9. Termination -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-right-from-bracket"></i> 9. Termination</div>
+        <p class="legal-text">
+          We may suspend or terminate your account at any time, with or without cause or notice. You may also delete your account at any time. Upon termination, your right to use the platform ceases immediately, though some content you posted may persist in cached or archived form.
+        </p>
+      </div>
+
+      <!-- 10. Changes -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-arrows-rotate"></i> 10. Changes to These Terms</div>
+        <p class="legal-text">
+          We may revise these Terms at any time. Changes will be posted on this page with an updated date. Your continued use of WhatsNaija after changes are posted constitutes acceptance of the new Terms.
+        </p>
+      </div>
+
+      <!-- Contact Note -->
+      <div class="legal-note">
+        <strong>Questions?</strong> If you have questions about these Terms, please reach out to our moderation team. By using WhatsNaija, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+      </div>
+
+    </div>
+  </div>
+
+      {% include "includes/sidebar_footer.html" %}
+
+</div>
+{% endblock content %}

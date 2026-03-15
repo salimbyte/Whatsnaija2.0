@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+<style>
+.legal-page { max-width: 720px; }
+.legal-intro { margin: 0 0 20px; font-size: 14px; color: var(--vz-text-muted); line-height: 1.65; }
+.legal-section { margin-top: 24px; }
+.legal-section-title {
+  font-size: 13px; font-weight: 700; color: var(--vz-text);
+  text-transform: uppercase; letter-spacing: 0.4px;
+  padding-bottom: 8px; margin: 0 0 12px;
+  border-bottom: 1px solid var(--vz-border-light);
+  display: flex; align-items: center; gap: 8px;
+}
+.legal-section-title i { color: var(--vz-accent); font-size: 12px; }
+.legal-rule {
+  display: flex; gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid var(--vz-border-light);
+  font-size: 14px; line-height: 1.6; color: var(--vz-text-secondary);
+}
+.legal-rule:last-child { border-bottom: none; }
+.legal-rule-icon {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px;
+  background: rgba(12,75,51,0.07); color: var(--vz-accent);
+  display: flex; align-items: center; justify-content: center; font-size: 11px;
+  margin-top: 1px;
+}
+.legal-rule strong { color: var(--vz-text); }
+.legal-note {
+  margin: 20px 0 0; padding: 14px 16px; border-radius: var(--vz-radius-sm);
+  background: rgba(12,75,51,0.04); border-left: 3px solid var(--vz-accent);
+  font-size: 13px; color: var(--vz-text-muted); line-height: 1.6;
+}
+.legal-note a { color: var(--vz-accent); font-weight: 600; }
+</style>
+{% endblock link %}
+
+{% block title %}Community Rules — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="page-wrapper legal-page">
+
+  <div class="side-box" style="margin-bottom: 16px;">
+    <div class="side-box-title" style="padding: 14px 20px; font-size: 12px;">
+      <i class="fa-solid fa-scale-balanced"></i> Community Rules
+    </div>
+    <div class="side-box-body" style="padding: 24px 28px;">
+      <p class="legal-intro">
+        WhatsNaija is a place for everyone. These rules exist to keep the platform safe, respectful, and useful. All users are expected to follow them. Violations may result in content removal, warnings, or account suspension.
+      </p>
+
+      <!-- Violence & Threats -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-shield-halved"></i> Safety</div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-ban"></i></div>
+          <div><strong>No Threats of Violence:</strong> Do not threaten, encourage, or glorify violence against any individual or group. This includes direct threats, veiled threats, and calls to action.</div>
+        </div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-ban"></i></div>
+          <div><strong>No Harassment or Bullying:</strong> Do not target individuals with repeated unwanted contact, personal attacks, intimidation, or coordinated abuse. This includes doxxing (sharing someone's private information).</div>
+        </div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-ban"></i></div>
+          <div><strong>No Hate Speech:</strong> Content that promotes hatred, discrimination, or dehumanization based on race, ethnicity, religion, gender, sexual orientation, disability, or nationality is not allowed.</div>
+        </div>
+      </div>
+
+      <!-- Content Integrity -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-file-shield"></i> Content Integrity</div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-ban"></i></div>
+          <div><strong>No Spam:</strong> Do not post repetitive, misleading, or low-effort content designed to manipulate visibility. This includes excessive self-promotion, link farming, and bot-generated content.</div>
+        </div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-ban"></i></div>
+          <div><strong>No Impersonation:</strong> Do not pretend to be another person, brand, or organization. Parody accounts must be clearly labeled as such.</div>
+        </div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-ban"></i></div>
+          <div><strong>No Misinformation:</strong> Do not knowingly share false or misleading information, especially on topics related to health, safety, or current events.</div>
+        </div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-ban"></i></div>
+          <div><strong>No Copyright Violations:</strong> Do not post content you do not own or have the right to share. This includes images, articles, videos, and other copyrighted material. Always credit original creators.</div>
+        </div>
+      </div>
+
+      <!-- Legal & Privacy -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-gavel"></i> Legal & Privacy</div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-ban"></i></div>
+          <div><strong>No Illegal Content:</strong> Do not post content that promotes, facilitates, or depicts illegal activity. This includes drug trafficking, fraud, and other criminal conduct.</div>
+        </div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-ban"></i></div>
+          <div><strong>Respect Privacy:</strong> Do not share personal or private information about others without their explicit consent. This includes real names, addresses, phone numbers, workplaces, and photos.</div>
+        </div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-ban"></i></div>
+          <div><strong>No NSFW or Explicit Content:</strong> Sexually explicit material, graphic violence, and other content not suitable for general audiences is not permitted.</div>
+        </div>
+      </div>
+
+      <!-- Community Standards -->
+      <div class="legal-section">
+        <div class="legal-section-title"><i class="fa-solid fa-users"></i> Community Standards</div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-check"></i></div>
+          <div><strong>Stay On Topic:</strong> Post content relevant to the community you're in. Off-topic posts may be removed.</div>
+        </div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-check"></i></div>
+          <div><strong>Use Descriptive Titles:</strong> Write clear, accurate titles so others can find and understand your posts.</div>
+        </div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-check"></i></div>
+          <div><strong>Be Constructive:</strong> Disagree respectfully. Critique ideas, not people. Add value to discussions rather than tearing them down.</div>
+        </div>
+        <div class="legal-rule">
+          <div class="legal-rule-icon"><i class="fa-solid fa-check"></i></div>
+          <div><strong>Report, Don't Retaliate:</strong> If you see a rule violation, use the report feature. Do not engage or escalate. Moderators will handle it.</div>
+        </div>
+      </div>
+
+      <!-- Enforcement Note -->
+      <div class="legal-note">
+        <strong>Enforcement:</strong> Moderators may remove content, issue warnings, or suspend accounts at their discretion. Repeated or severe violations may result in a permanent ban. If you believe an action was taken in error, you can reach out to the moderation team. For full legal terms, see our <a href="{% url 'terms' %}">Terms of Service</a>.
+      </div>
+
+    </div>
+  </div>
+
+      {% include "includes/sidebar_footer.html" %}
+
+</div>
+{% endblock content %}

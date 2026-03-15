@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/index.css' %}" />
+<style>
+.mod-wrap { max-width: 900px; margin: 0 auto; padding: 28px 12px 40px; }
+.mod-header {
+  background: linear-gradient(135deg, #0C4B33 0%, #15805a 100%);
+  border-radius: var(--vz-radius); padding: 20px 28px; margin-bottom: 16px; color: #fff;
+}
+.mod-header h1 { font-size: 18px; font-weight: 800; margin: 0 0 3px; }
+.mod-header p  { font-size: 12px; color: rgba(255,255,255,.7); margin: 0; }
+.mod-nav { display: flex; gap: 0; background: var(--vz-surface);
+  border: 1px solid var(--vz-border); border-radius: var(--vz-radius-sm);
+  overflow: hidden; margin-bottom: 16px; }
+.mod-nav a { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 8px; font-size: 12px; font-weight: 600;
+  color: var(--vz-text-muted); text-decoration: none;
+  border-right: 1px solid var(--vz-border); transition: all .15s; }
+.mod-nav a:last-child { border-right: none; }
+.mod-nav a:hover  { background: var(--vz-accent-soft); color: var(--vz-accent); }
+.mod-nav a.active { background: var(--vz-accent); color: #fff; }
+.mod-nav a .badge { background: #dc2626; color: #fff; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 999px; }
+
+.log-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0;
+  border-bottom: 1px solid var(--vz-border-light); }
+.log-row:last-child { border-bottom: none; }
+.log-icon { width: 32px; height: 32px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.log-icon.remove  { background: #fef2f2; color: #dc2626; }
+.log-icon.restore { background: #f0fdf4; color: var(--vz-accent); }
+.log-icon.ban     { background: #fff7ed; color: #c2410c; }
+.log-icon.unban   { background: #f0fdf4; color: var(--vz-accent); }
+.log-icon.mod     { background: #eff6ff; color: #2563eb; }
+.log-icon.dismiss { background: var(--vz-surface-hover); color: var(--vz-text-muted); }
+.log-body { flex: 1; min-width: 0; }
+.log-action { font-size: 12px; font-weight: 700; color: var(--vz-text); }
+.log-detail { font-size: 11px; color: var(--vz-text-muted); margin-top: 2px; }
+.log-time { font-size: 11px; color: var(--vz-text-faint); white-space: nowrap; }
+.pager { display: flex; justify-content: center; align-items: center; gap: 12px;
+  margin-top: 20px; font-size: 13px; }
+.pager-btn { padding: 7px 16px; border: 1px solid var(--vz-border);
+  border-radius: var(--vz-radius-sm); text-decoration: none; color: var(--vz-text); }
+.pager-btn:hover { border-color: var(--vz-accent); color: var(--vz-accent); text-decoration: none; }
+.mod-empty { padding: 32px 0; text-align: center; color: var(--vz-text-faint); font-size: 13px; }
+.mod-empty i { font-size: 28px; margin-bottom: 10px; display: block; }
+
+
+</style>
+{% endblock link %}
+
+{% block title %}Mod Log: {{ stage.name }} — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="mod-wrap">
+
+  <div class="mod-header">
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.6);margin-bottom:5px;">
+          <i class="fa-solid fa-shield-halved"></i> Stage Moderation — {{ stage.name }}
+    </div>
+    <h1><i class="fa-solid fa-scroll"></i> Moderation Log</h1>
+    <p>Full audit trail of all actions taken in this stage.</p>
+  </div>
+
+  <div class="mod-nav">
+    <a href="{% url 'stages:mod_dashboard' stage.name %}"><i class="fa-solid fa-gauge"></i> <span>Overview</span></a>
+    <a href="{% url 'stages:mod_queue' stage.name %}"><i class="fa-solid fa-flag"></i> <span>Queue</span>
+      {% if pending_count %}<span class="badge">{{ pending_count }}</span>{% endif %}</a>
+    <a href="{% url 'stages:mod_members' stage.name %}"><i class="fa-solid fa-users-gear"></i> <span>Members</span></a>
+    <a href="{% url 'stages:mod_log' stage.name %}" class="active"><i class="fa-solid fa-scroll"></i> <span>Log</span></a>
+    <a href="{% url 'stages:stage_page' stage.name %}"><i class="fa-solid fa-arrow-left"></i> <span>Back</span></a>
+  </div>
+
+  <div class="side-box">
+    <div class="side-box-body" style="padding: 4px 20px 16px;">
+      {% for act in log %}
+      <div class="log-row">
+        {% if act.action in "block_post,delete_post,delete_comment" %}
+          <div class="log-icon remove"><i class="fa-solid fa-eye-slash"></i></div>
+        {% elif act.action in "unblock_post" %}
+          <div class="log-icon restore"><i class="fa-solid fa-eye"></i></div>
+        {% elif act.action in "stage_ban,ban_user" %}
+          <div class="log-icon ban"><i class="fa-solid fa-ban"></i></div>
+        {% elif act.action in "stage_unban,unban_user" %}
+          <div class="log-icon unban"><i class="fa-solid fa-circle-check"></i></div>
+        {% elif act.action in "add_mod" %}
+          <div class="log-icon mod"><i class="fa-solid fa-shield-halved"></i></div>
+        {% elif act.action in "remove_mod" %}
+          <div class="log-icon ban"><i class="fa-solid fa-user-minus"></i></div>
+        {% else %}
+          <div class="log-icon dismiss"><i class="fa-solid fa-xmark"></i></div>
+        {% endif %}
+
+        <div class="log-body">
+          <div class="log-action">
+            {{ act.get_action_display }}
+            {% if act.target_user %} — <a href="/{{ act.target_user.username }}/" style="color:inherit;">{{ act.target_user.username }}</a>{% endif %}
+            {% if act.target_post %} — "{{ act.target_post.title|truncatechars:40 }}"{% endif %}
+          </div>
+          <div class="log-detail">
+            by <strong>{{ act.moderator.username }}</strong>
+            {% if act.reason %} · {{ act.reason|truncatechars:80 }}{% endif %}
+          </div>
+        </div>
+        <div class="log-time">{{ act.created_at|timesince }} ago</div>
+      </div>
+      {% empty %}
+      <div class="mod-empty">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        No moderation actions recorded for this stage yet.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if log.has_other_pages %}
+  <div class="pager">
+    {% if log.has_previous %}
+    <a href="?page={{ log.previous_page_number }}" class="pager-btn">
+      <i class="fa-solid fa-chevron-left"></i> Prev
+    </a>
+    {% endif %}
+    <span style="color:var(--vz-text-muted);">Page {{ log.number }} of {{ log.paginator.num_pages }}</span>
+    {% if log.has_next %}
+    <a href="?page={{ log.next_page_number }}" class="pager-btn">
+      Next <i class="fa-solid fa-chevron-right"></i>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock content %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+{% load filter %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/create.css' %}" />
+{% endblock link %}
+
+{% block title %}Edit {{ stage.name }} — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="composer">
+  <div class="composer-body">
+    <div class="composer-topbar">
+      <div class="composer-identity">
+        <div class="composer-avatar" style="background:{{ stage.name|avatar_color }}">
+          <span class="avatar-letter">{{ stage.name|avatar_initials }}</span>
+        </div>
+        <div class="composer-meta">
+          <span class="composer-username">{{ stage.name }}</span>
+          <span class="composer-action">editing community settings</span>
+        </div>
+      </div>
+      <a href="/s/{{ stage.name }}/" class="composer-close" title="Cancel">
+        <i class="fa-solid fa-xmark"></i>
+      </a>
+    </div>
+
+    {% if messages %}
+    <div class="form-messages" style="padding: 0 24px;">
+      {% for message in messages %}
+      <div class="form-alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+        <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="composer-form">
+      {% csrf_token %}
+
+      <div class="title-section">
+        <label style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 6px; display: block;">Display Title</label>
+        {{ form.title }}
+        {% if form.title.errors %}<span class="field-error">{{ form.title.errors.0 }}</span>{% endif %}
+      </div>
+
+      <div class="content-section">
+        <div class="content-label">
+          <i class="fa-solid fa-paragraph"></i>
+          Description
+        </div>
+        {{ form.description }}
+        {% if form.description.errors %}<span class="field-error">{{ form.description.errors.0 }}</span>{% endif %}
+      </div>
+
+      <div class="content-section">
+        <div class="content-label">
+          <i class="fa-solid fa-image"></i>
+          Cover Image
+        </div>
+        {% if stage.image %}
+        <div style="margin-bottom: 8px;">
+          <img src="{{ stage.image.url }}" alt="" style="max-width: 200px; border-radius: 8px;" />
+        </div>
+        {% endif %}
+        {{ form.image }}
+        {% if form.image.errors %}<span class="field-error">{{ form.image.errors.0 }}</span>{% endif %}
+      </div>
+
+      <div class="composer-footer">
+        <div class="footer-left">
+          <a href="/s/{{ stage.name }}/" class="rules-link"><i class="fa-solid fa-arrow-left"></i> Cancel</a>
+        </div>
+        <div class="footer-right">
+          <button type="submit" class="publish-btn">
+            <span class="btn-text">Save Changes</span>
+            <i class="fa-solid fa-check"></i>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock content %}

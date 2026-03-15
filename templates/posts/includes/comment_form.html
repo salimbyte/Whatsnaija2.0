@@ -1,0 +1,40 @@
+<!-- Comment compose form -->
+<div id="new-comment">
+  <div class="compose-header">
+    <span class="compose-label"><i class="fa-regular fa-comment-dots"></i> Leave a comment</span>
+    {% if request.user.is_authenticated %}<span class="compose-as">as <a href="/{{request.user.username}}" target="_blank" rel="noopener">{{request.user.username}}</a></span>{% endif %}
+  </div>
+  <form action="{% url 'posts:make_comment' post.id post.slug %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="compose-toolbar">
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="formatText('bold')" title="Bold"><i class="fa-solid fa-bold"></i></button>
+      <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="formatText('italic')" title="Italic"><i class="fa-solid fa-italic"></i></button>
+      <button type="button" class="fmt-btn" onclick="insertLink()" title="Insert link"><i class="fa-solid fa-link"></i></button>
+      <label class="fmt-btn" title="Attach image or GIF" style="cursor:pointer;">
+        <i class="fa-solid fa-image"></i>
+        <input type="file" id="compose-img-input" name="image" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="previewMainImg(this)" />
+      </label>
+      <button type="button" class="fmt-btn fmt-btn--gif" onclick="openGifPicker('main')" title="Search GIFs">GIF</button>
+    </div>
+    <div id="compose-img-preview" class="compose-img-preview"></div>
+    <div id="compose" class="compose-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="What are your thoughts?"></div>
+    <textarea name="body" id="compose-body" style="display:none"></textarea>
+    <div class="comment-form-footer">
+      <div class="post-as">
+        {% if request.user.is_authenticated %}
+        <input type="checkbox" id="asnone" name="is_anon" />
+        <label for="asnone">Post anonymously</label>
+        <span class="anon-hint" title="Your username will be hidden. Moderators can still see your identity.">(?)</span>
+        {% else %}
+        <span>
+          Posting anonymously. <a href="/users/login/">Log in</a> to comment as yourself.
+        </span>
+        {% endif %}
+      </div>
+      <div class="compose-footer-right">
+        <span class="compose-char-count" id="compose-char-count"></span>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Comment</button>
+      </div>
+    </div>
+  </form>
+</div>

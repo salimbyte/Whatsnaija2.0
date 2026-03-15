@@ -1,0 +1,40 @@
+<!-- Empty state — shown when no comments yet -->
+{% if not comment_count %}
+<div class="comments-empty">
+  <i class="fa-regular fa-comment-dots"></i>
+  <p>No comments yet. Be the first!</p>
+  {% if not request.user.is_authenticated %}
+  <a href="{% url 'users:login' %}?next={{ request.path }}" class="login-cta">
+    <i class="fa-solid fa-arrow-right-to-bracket"></i> Log in to comment
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Comments Section -->
+{% if comment_count %}
+<div id="comments">
+  <div class="comments-header">
+    <span class="comments-count-label">{{comment_count}} comment{{comment_count|pluralize}}</span>
+    <div class="comment-sort-tabs">
+      <button class="sort-tab active" data-sort="top">Top</button>
+      <button class="sort-tab" data-sort="newest">Newest</button>
+    </div>
+  </div>
+  <div class="comments-list" id="comments-list">
+    {% for comment in top_comments %}
+      <div class="comment-item-wrap{% if forloop.counter > 5 %} comment-hidden{% endif %}">
+        {% include 'posts/includes/comment.html' with comment=comment user_likes=user_likes user_dislikes=user_dislikes depth=0 %}
+      </div>
+    {% endfor %}
+  </div>
+  {% if top_comment_count > 5 %}
+  <div class="load-more-wrap" id="load-more-wrap">
+    <button type="button" class="load-more-btn" id="load-more-btn" onclick="loadMoreComments()">
+      <i class="fa-solid fa-chevron-down"></i>
+      Show <span id="load-more-remaining">{{ top_comment_count|add:"-5" }}</span> more comment{{ top_comment_count|add:"-5"|pluralize }}
+    </button>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

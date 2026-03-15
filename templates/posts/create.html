@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% load static %}
+{% load filter %}
+
+{% block link %}
+<link rel="stylesheet" href="{% static 'style/create.css' %}" />
+{{ form.media }}
+{% endblock link %}
+
+{% block title %}New Post — WhatsNaija{% endblock title %}
+
+{% block content %}
+<div class="composer">
+  <!-- Main Composer -->
+  <div class="composer-body">
+    <!-- Top Bar -->
+    <div class="composer-topbar">
+      <div class="composer-identity">
+        <div class="composer-avatar">
+          {% if user.userprofile.avatar %}
+          <img src="{{ user.userprofile.avatar.url }}" alt="" />
+          {% else %}
+          <span class="avatar-letter" style="background:{{user.username|avatar_color}}">{{user.username|first|upper}}</span>
+          {% endif %}
+        </div>
+        <div class="composer-meta">
+          <span class="composer-username">{{ user.username }}</span>
+          <span class="composer-action">is creating a post</span>
+        </div>
+      </div>
+      <a href="/" class="composer-close" title="Discard">
+        <i class="fa-solid fa-xmark"></i>
+      </a>
+    </div>
+
+    <form action="" method="post" enctype="multipart/form-data" class="composer-form">
+      {% csrf_token %}
+      
+      <!-- Stage Chips -->
+      <div class="stage-section">
+        <div class="stage-label">Post to</div>
+        <div class="stage-chips" id="stageChips">
+          {% for stage in stages %}
+          <label class="stage-chip">
+            <input type="radio" name="stage" value="{{stage.id}}" required {% if forloop.first %}checked{% endif %}>
+            <span class="chip-inner">
+              <span class="chip-name-row"><span class="chip-prefix">s/</span>{{stage.name}}</span>
+              {% if stage.title %}<span class="chip-title">{{ stage.title }}</span>{% endif %}
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+        {% if form.stage.errors %}<span class="field-error">{{form.stage.errors}}</span>{% endif %}
+      </div>
+
+      <!-- Title Input -->
+      <div class="title-section">
+        <input 
+          type="text" 
+          name="title" 
+          id="titleInput"
+          class="title-input"
+          placeholder="What's on your mind?"
+          maxlength="240"
+          required
+          autocomplete="off"
+        />
+        <div class="title-underline"></div>
+        <div class="title-meta">
+          <span class="char-indicator"><span id="charCount">0</span><span class="char-max">/240</span></span>
+        </div>
+        {% if form.title.errors %}<span class="field-error">{{form.title.errors}}</span>{% endif %}
+      </div>
+
+      <!-- URL Field -->
+      <div class="url-section">
+        <div class="url-label">
+          <i class="fa-solid fa-link"></i>
+          Link <span class="optional-tag">optional</span>
+        </div>
+        <div class="url-input-wrapper">
+          <input
+            type="url"
+            name="url"
+            id="urlInput"
+            class="url-input"
+            placeholder="https://example.com"
+            maxlength="256"
+            autocomplete="off"
+          />
+        </div>
+        {% if form.url.errors %}<span class="field-error">{{form.url.errors}}</span>{% endif %}
+      </div>
+
+      <!-- Content Area -->
+      <div class="content-section">
+        <div class="content-label">
+          <i class="fa-solid fa-paragraph"></i>
+          Tell us more <span class="optional-tag">optional</span>
+        </div>
+        <div class="editor-container">
+          {{ form.body }}
+        </div>
+        {% if form.body.errors %}<span class="field-error">{{form.body.errors}}</span>{% endif %}
+      </div>
+
+      <!-- Media Section -->
+      <div class="media-section">
+        <div class="media-header">
+          <div class="media-label">
+            <i class="fa-solid fa-image"></i>
+            Attach Media
+          </div>
+          <span class="media-hint">First image becomes thumbnail</span>
+        </div>
+        
+        {{ formset.management_form }}
+        <div class="media-grid">
+          {% for imageform in formset %}
+          <div class="media-slot {% if forloop.first %}primary{% endif %}" data-index="{{forloop.counter0}}">
+            <input
+              type="file"
+              name="form-{{forloop.counter0}}-image"
+              accept="image/*"
+              id="media-{{forloop.counter0}}"
+              class="media-input"
+            />
+            <label for="media-{{forloop.counter0}}" class="media-dropzone">
+              <img class="media-preview" />
+              <div class="media-empty">
+                {% if forloop.first %}
+                <i class="fa-solid fa-star"></i>
+                <span>Cover</span>
+                {% else %}
+                <i class="fa-solid fa-plus"></i>
+                {% endif %}
+              </div>
+            </label>
+            <button type="button" class="media-remove">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+        
+        {% if formset.errors %}
+        {% for dict in formset.errors %}{% for error in dict.values %}
+        <span class="field-error">{{ error }}</span>
+        {% endfor %}{% endfor %}
+        {% endif %}
+      </div>
+
+      <!-- Bottom Actions -->
+      <div class="composer-footer">
+        <div class="footer-left">
+          <a href="{% url 'rules' %}" class="rules-link">
+            <i class="fa-solid fa-shield-check"></i>
+            Community Rules
+          </a>
+        </div>
+        <div class="footer-right">
+          <button type="submit" class="publish-btn">
+            <span class="btn-text">Publish</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Sidebar -->
+  <aside class="composer-accent">
+    <div class="tips-card">
+      <div class="tips-header">
+        <i class="fa-solid fa-lightbulb"></i>
+        Posting Tips
+      </div>
+      <ul class="tips-list">
+        <li>Choose the right stage for your topic</li>
+        <li>Write a clear, descriptive title</li>
+        <li>Add context in the body</li>
+        <li>Images make posts more engaging</li>
+        <li>Be respectful and follow the rules</li>
+      </ul>
+    </div>
+    
+    <div class="rules-card">
+      <div class="rules-card-title">
+        <i class="fa-solid fa-scroll"></i>
+        Remember
+      </div>
+      <p>Posts that violate community guidelines will be removed. Be authentic, be kind.</p>
+      <a href="{% url 'rules' %}">Read the full rules →</a>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function() {
+  // Title character count with color feedback
+  const titleInput = document.getElementById('titleInput');
+  const charCount = document.getElementById('charCount');
+  const underline = document.querySelector('.title-underline');
+  
+  if (titleInput) {
+    titleInput.addEventListener('input', function() {
+      const len = this.value.length;
+      charCount.textContent = len;
+      
+      // Dynamic underline width
+      const progress = Math.min(len / 240, 1);
+      underline.style.transform = 'scaleX(' + progress + ')';
+      
+      // Color feedback
+      if (len > 220) {
+        charCount.style.color = '#dc2626';
+      } else if (len > 180) {
+        charCount.style.color = '#f59e0b';
+      } else {
+        charCount.style.color = '#5b5fc7';
+      }
+    });
+  }
+
+  // Media handling
+  document.querySelectorAll('.media-slot').forEach(slot => {
+    const input = slot.querySelector('.media-input');
+    const preview = slot.querySelector('.media-preview');
+    const removeBtn = slot.querySelector('.media-remove');
+
+    if (input) {
+      input.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          const reader = new FileReader();
+          reader.onload = e => {
+            preview.src = e.target.result;
+            slot.classList.add('has-media');
+          };
+          reader.readAsDataURL(this.files[0]);
+        }
+      });
+    }
+
+    if (removeBtn) {
+      removeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        input.value = '';
+        preview.src = '';
+        slot.classList.remove('has-media');
+      });
+    }
+
+    // Drag & drop
+    const dropzone = slot.querySelector('.media-dropzone');
+    if (dropzone) {
+      ['dragenter', 'dragover'].forEach(evt => {
+        dropzone.addEventListener(evt, e => {
+          e.preventDefault();
+          slot.classList.add('drag-over');
+        });
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        dropzone.addEventListener(evt, e => {
+          e.preventDefault();
+          slot.classList.remove('drag-over');
+        });
+      });
+      dropzone.addEventListener('drop', e => {
+        const files = e.dataTransfer.files;
+        if (files.length && input) {
+          input.files = files;
+          input.dispatchEvent(new Event('change'));
+        }
+      });
+    }
+  });
+
+  // Scroll stage chips
+  const chips = document.getElementById('stageChips');
+  if (chips) {
+    let isDown = false, startX, scrollLeft;
+    chips.addEventListener('mousedown', e => { isDown = true; startX = e.pageX - chips.offsetLeft; scrollLeft = chips.scrollLeft; });
+    chips.addEventListener('mouseleave', () => isDown = false);
+    chips.addEventListener('mouseup', () => isDown = false);
+    chips.addEventListener('mousemove', e => { if (!isDown) return; e.preventDefault(); chips.scrollLeft = scrollLeft - (e.pageX - chips.offsetLeft - startX); });
+  }
+})();
+</script>
+
+{% endblock content %}
